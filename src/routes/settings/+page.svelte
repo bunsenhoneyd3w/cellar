@@ -28,6 +28,25 @@
 </section>
 
 <section class="mb-6">
+	<h2 class="section-title">Photo reading</h2>
+	<div class="card space-y-2 px-4 py-3 text-sm">
+		{#if data.photoReading.on}
+			<p><span class="font-semibold">On.</span> Add from photo asks {data.photoReading.model}.</p>
+		{:else}
+			<p>
+				<span class="font-semibold">Off.</span> Add from photo opens a blank form. To turn it on,
+				put an Anthropic API key in a <code>.env</code> file next to the app (see
+				<code>.env.example</code>) and restart Cellar.
+			</p>
+		{/if}
+		<p class="text-gray-500">
+			A photo is sent to Anthropic only when you use Add from photo. Check-in photos never leave the
+			house. Each photo costs a few cents on the Anthropic account.
+		</p>
+	</div>
+</section>
+
+<section class="mb-6">
 	<h2 class="section-title">Export</h2>
 	<!-- eslint-disable svelte/no-navigation-without-resolve -->
 	<a class="btn-primary mb-3 w-full" href={exportUrl('all.json')} download>
