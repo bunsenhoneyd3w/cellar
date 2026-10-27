@@ -10,6 +10,7 @@ const LENGTH = 10;
 export const ID_PREFIXES = {
 	space: 'spc',
 	equipment: 'eqp',
+	equipmentPhoto: 'eph',
 	protocol: 'pro',
 	protocolFamily: 'prf',
 	batch: 'bat',

@@ -1,10 +1,12 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 import type { Db } from './db';
-import { equipment, space } from './db/schema';
+import { equipment, equipmentPhoto, space } from './db/schema';
 import type { EquipmentKind } from '../enums';
 import { InputError } from './form';
+import { deletePhotoFiles } from './photos';
 
 export type Equipment = typeof equipment.$inferSelect;
+export type EquipmentPhoto = typeof equipmentPhoto.$inferSelect;
 export type EquipmentInput = {
 	name: string;
 	kind: EquipmentKind;
@@ -15,13 +17,19 @@ export type EquipmentInput = {
 };
 
 export function listEquipment(db: Db) {
+	// The oldest photo stands for the item in the list.
+	const thumb = sql<string | null>`(
+		select ${equipmentPhoto.path} from ${equipmentPhoto}
+		where ${equipmentPhoto.equipmentId} = ${equipment.id}
+		order by ${equipmentPhoto.createdAt}, ${equipmentPhoto.id} limit 1
+	)`;
 	return db
-		.select({ item: equipment, spaceName: space.name })
+		.select({ item: equipment, spaceName: space.name, thumb })
 		.from(equipment)
 		.leftJoin(space, eq(equipment.spaceId, space.id))
 		.orderBy(asc(equipment.name))
 		.all()
-		.map((r) => ({ ...r.item, spaceName: r.spaceName }));
+		.map((r) => ({ ...r.item, spaceName: r.spaceName, thumb: r.thumb }));
 }
 
 export function getEquipment(db: Db, id: string): Equipment | undefined {
@@ -46,6 +54,49 @@ export function updateEquipment(db: Db, id: string, input: EquipmentInput): Equi
 		.returning()
 		.get();
 	if (!row) throw new InputError('That equipment no longer exists.');
+	return row;
+}
+
+export function listEquipmentPhotos(db: Db, equipmentId: string): EquipmentPhoto[] {
+	return db
+		.select()
+		.from(equipmentPhoto)
+		.where(eq(equipmentPhoto.equipmentId, equipmentId))
+		.orderBy(asc(equipmentPhoto.createdAt), asc(equipmentPhoto.id))
+		.all();
+}
+
+export function addEquipmentPhoto(
+	db: Db,
+	equipmentId: string,
+	saved: { path: string; originalPath: string | null },
+	takenAt: string | null = null
+): EquipmentPhoto {
+	if (!getEquipment(db, equipmentId)) throw new InputError('That equipment no longer exists.');
+	return db
+		.insert(equipmentPhoto)
+		.values({ equipmentId, path: saved.path, originalPath: saved.originalPath, takenAt })
+		.returning()
+		.get();
+}
+
+/**
+ * Removes one photo from one item. The files go only when no other item still
+ * shows the same picture (a shelf photo sits on every item it added).
+ */
+export function deleteEquipmentPhoto(
+	db: Db,
+	id: string,
+	root?: string
+): EquipmentPhoto | undefined {
+	const row = db.delete(equipmentPhoto).where(eq(equipmentPhoto.id, id)).returning().get();
+	if (!row) return undefined;
+	const stillUsed = db
+		.select({ id: equipmentPhoto.id })
+		.from(equipmentPhoto)
+		.where(eq(equipmentPhoto.path, row.path))
+		.get();
+	if (!stillUsed) deletePhotoFiles([row.path, row.originalPath], root);
 	return row;
 }
 
