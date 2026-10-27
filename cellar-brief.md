@@ -166,9 +166,11 @@ One per batch, written when status becomes done or failed.
 | 3 | Mushroom batch type: phase list (spawn, colonization, fruiting setup, fruiting, harvest, cleanup), contamination event logging, multiple flushes per batch | Grow 001 Blue Oyster logged Day 0 to cleanup |
 | 4 | Preserves: `preserve` batch type and inventory items linked to the batch; use-by view | Canning shelves match the app |
 | 5 | Hydroponic and seedling batch types; batch comparison view and reading charts across batches of the same protocol | Two batches of one protocol side by side |
-| 6 | Raspberry Pi deployment, scheduled backups, sensor import, Mealie as the recipe source | App runs without the laptop |
+| 6 | Look and feel: a chosen visual direction applied through shared design tokens, a color and icon per batch type, dark mode, more photos on cards, real home-screen icons and an offline screen, better empty states. Folds in small loose ends: batch list filters by type and space, the seeds sown chart, stray photo cleanup | Seth has used it on his phone in the basement and likes how it looks, in light and dark |
+| 7 | Always on: Cellar runs as a background service (on the Mac first, then the Raspberry Pi), nightly backups of the database and photos, `cellar.local` on the home network | App runs without the laptop, and last night's backup restores |
+| 8 | Sensors and Mealie: sensor import if the controllers expose data (O4); Mealie as the recipe source in place of Paprika files | A reading arrives without typing it, and a protocol comes in from Mealie |
 
-## 6. Raspberry Pi scoping (Phase 6)
+## 6. Raspberry Pi scoping (Phase 7)
 
 Purpose: always-on home server so the phone app works any time, and a host for Mealie.
 
