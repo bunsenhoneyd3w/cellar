@@ -14,7 +14,7 @@ import { nowIso } from '../time';
 import { InputError } from './form';
 import { getBatch } from './batches';
 import type { SavedPhoto } from './photos';
-import { completeTask, getTask } from './tasks';
+import { applyPhaseChange, completeTask, getTask } from './tasks';
 import { nextFlush } from './grows';
 
 export type ReadingInput = { kind: string; value: number; unit: string };
@@ -127,7 +127,10 @@ export function createObservation(db: Db, input: ObservationInput) {
 				.values(contaminations.map((c) => ({ observationId: obs.id, ...c })))
 				.run();
 		}
-		if (phase !== b.phase) tx.update(batch).set({ phase }).where(eq(batch.id, b.id)).run();
+		if (phase !== b.phase) {
+			tx.update(batch).set({ phase }).where(eq(batch.id, b.id)).run();
+			applyPhaseChange(tx, b, phase, observedAt);
+		}
 		return obs;
 	});
 }

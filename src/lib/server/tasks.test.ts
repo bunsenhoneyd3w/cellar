@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm';
 import { openDb, schema } from './db';
 import { migrateToLatest, migrationsUpTo, testDb } from './db/test-helpers';
 import { createProtocol } from './protocols';
-import { createBatch } from './batches';
+import { createBatch, updateBatch } from './batches';
+import { createObservation, saveCheckIn } from './observations';
 import { finishBatch, reopenBatch } from './outcomes';
 import {
 	completeTask,
@@ -283,9 +284,131 @@ describe('task migration safety', () => {
 			dueAt: '2026-10-27',
 			recurrence: 'weekly',
 			repeatUntil: null,
-			previousTaskId: null
+			previousTaskId: null,
+			phase: null
 		});
 		const { next } = completeTask(db, 'tsk_aaaaaaaaaa', '2026-10-27T09:00:00-05:00');
 		expect(next?.dueAt).toBe('2026-11-03');
+	});
+
+	// Phase 3 adds task.phase (migration 4). A repeating batch task written the
+	// way Phase 2 left it must still show, repeat, and stop on its date.
+	it('keeps a Phase 2 repeating batch task working after the Phase 3 migrations', () => {
+		const db = openDb(':memory:', migrationsUpTo(2));
+		const t = '2026-10-26T20:00:00-05:00';
+		db.$client.exec(`
+			insert into protocol (id, family_id, name, batch_type, version, body_json, created_at, updated_at)
+				values ('pro_cccccccccc', 'prf_cccccccccc', 'Kraut', 'ferment', 1, '{"ingredients":[],"steps":[],"targets":[],"expectedDays":21}', '${t}', '${t}');
+			insert into batch (id, name, batch_type, protocol_id, started_at, status, phase, created_at, updated_at)
+				values ('bat_cccccccccc', 'Ferment 003 Kraut', 'ferment', 'pro_cccccccccc', '${t}', 'active', 'primary ferment', '${t}', '${t}');
+			insert into task (id, batch_id, title, due_at, recurrence, repeat_until, created_at, updated_at)
+				values ('tsk_cccccccccc', 'bat_cccccccccc', 'Top up airlock water', '2026-10-27', 'weekly', '2026-11-04', '${t}', '${t}');
+		`);
+		migrateToLatest(db);
+		expect(listOpenTasks(db, { batchId: 'bat_cccccccccc' }).map((x) => x.id)).toEqual([
+			'tsk_cccccccccc'
+		]);
+		const { next } = completeTask(db, 'tsk_cccccccccc', '2026-10-27T09:00:00-05:00');
+		expect(next).toMatchObject({ dueAt: '2026-11-03', phase: null });
+		expect(completeTask(db, next!.id, '2026-11-03T09:00:00-05:00').next).toBeUndefined();
+	});
+});
+
+describe('phase tasks', () => {
+	const mist: TaskTemplate = {
+		title: 'Mist and fan',
+		startDay: 0,
+		recurrence: 'daily',
+		endDay: null,
+		phase: 'fruiting'
+	};
+	const check: TaskTemplate = {
+		title: 'Check for green',
+		startDay: 3,
+		recurrence: 'every 3 days',
+		endDay: null,
+		phase: 'colonization'
+	};
+
+	function grow(startPhase = 'spawn') {
+		const db = testDb();
+		const p = createProtocol(db, {
+			name: 'Blue Oyster',
+			batchType: 'mushroom',
+			bodyJson: { ...emptyBody(), tasks: [mist, check] }
+		});
+		const b = createBatch(db, {
+			name: 'Grow 001 Blue Oyster',
+			protocolId: p.id,
+			phase: startPhase
+		});
+		return { db, b };
+	}
+	const titles = (db: ReturnType<typeof testDb>, batchId: string) =>
+		listOpenTasks(db, { batchId }).map((x) => `${x.title} ${x.dueAt}`);
+
+	it('waits for its phase, then follows the batch in and out of it', () => {
+		const { db, b } = grow();
+		expect(titles(db, b.id)).toEqual([]);
+
+		createObservation(db, { batchId: b.id, note: 'Into the tub', phase: 'colonization' });
+		expect(titles(db, b.id)).toEqual([`Check for green ${addDays(today, 3)}`]);
+
+		createObservation(db, { batchId: b.id, note: 'Fully white', phase: 'fruiting' });
+		expect(titles(db, b.id)).toEqual([`Mist and fan ${today}`]);
+		const open = listOpenTasks(db, { batchId: b.id })[0];
+		expect(open.phase).toBe('fruiting');
+
+		// Done carries the phase to the next copy.
+		const { next } = completeTask(db, open.id);
+		expect(next).toMatchObject({ phase: 'fruiting', dueAt: addDays(today, 1) });
+
+		// Leaving fruiting removes the open copy and keeps the done one.
+		createObservation(db, { batchId: b.id, note: 'Picked', phase: 'harvest' });
+		expect(titles(db, b.id)).toEqual([]);
+		expect(getTask(db, open.id)?.doneAt).not.toBeNull();
+		expect(getTask(db, next!.id)).toBeUndefined();
+
+		// Back to fruiting for flush 2: the task comes back on its own.
+		createObservation(db, { batchId: b.id, note: 'Soaked, back in the tent', phase: 'fruiting' });
+		expect(titles(db, b.id)).toEqual([`Mist and fan ${today}`]);
+
+		// Undo of the old Done still works; the task stays hidden outside its phase.
+		createObservation(db, { batchId: b.id, note: 'Done', phase: 'cleanup' });
+		expect(undoTask(db, open.id).doneAt).toBeNull();
+		expect(titles(db, b.id)).toEqual([]);
+	});
+
+	it('creates tasks for the phase a batch starts in', () => {
+		const { db, b } = grow('fruiting');
+		expect(titles(db, b.id)).toEqual([`Mist and fan ${today}`]);
+	});
+
+	it('ticking a task on the check-in that leaves its phase leaves no copy behind', () => {
+		const { db, b } = grow('fruiting');
+		const [t] = listOpenTasks(db, { batchId: b.id });
+		saveCheckIn(db, { batchId: b.id, note: 'Harvest day', phase: 'harvest', taskIds: [t.id] });
+		expect(getTask(db, t.id)?.doneAt).not.toBeNull();
+		expect(titles(db, b.id)).toEqual([]);
+	});
+
+	it('follows a phase changed on the edit screen too', () => {
+		const { db, b } = grow();
+		updateBatch(db, b.id, { name: b.name, startedAt: b.startedAt, phase: 'fruiting' });
+		expect(titles(db, b.id)).toEqual([`Mist and fan ${today}`]);
+		updateBatch(db, b.id, { name: b.name, startedAt: b.startedAt, phase: 'cleanup' });
+		expect(titles(db, b.id)).toEqual([]);
+	});
+
+	it('starts a backdated phase change on its first repeat from today', () => {
+		const { db, b } = grow();
+		createObservation(db, {
+			batchId: b.id,
+			note: 'Into the tub',
+			phase: 'colonization',
+			observedAt: noon(addDays(today, -5))
+		});
+		// Day 3 of colonization was two days ago; every 3 days lands tomorrow.
+		expect(titles(db, b.id)).toEqual([`Check for green ${addDays(today, 1)}`]);
 	});
 });

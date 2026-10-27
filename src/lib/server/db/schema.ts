@@ -228,6 +228,8 @@ export const task = sqliteTable(
 		previousTaskId: text('previous_task_id').references((): AnySQLiteColumn => task.id, {
 			onDelete: 'set null'
 		}),
+		/** Set on tasks that belong to a phase (D26); they live only while the batch is in it. */
+		phase: text('phase'),
 		...stamps()
 	},
 	(t) => [index('task_due').on(t.dueAt), index('task_batch').on(t.batchId)]

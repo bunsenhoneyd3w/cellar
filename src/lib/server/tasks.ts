@@ -1,7 +1,7 @@
-import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNotNull, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import type { Db } from './db';
 import { batch, task } from './db/schema';
-import { bodyTasks } from '../protocol-body';
+import { bodyTasks, type TaskTemplate } from '../protocol-body';
 import { recurrenceDays, recurrenceFor } from '../recurrence';
 import { addDays, daysBetween, isDate, localDate, nowIso } from '../time';
 import { InputError } from './form';
@@ -89,7 +89,8 @@ export function completeTask(db: Db, id: string, doneAt: string = nowIso()) {
 						dueAt,
 						recurrence: t.recurrence,
 						repeatUntil: t.repeatUntil,
-						previousTaskId: t.id
+						previousTaskId: t.id,
+						phase: t.phase
 					})
 					.returning()
 					.get();
@@ -119,6 +120,7 @@ export type OpenTask = Task & { batchName: string | null };
 /**
  * Tasks not done yet, soonest first, with undated ones last. Tasks on a
  * finished batch are left out but kept, so reopening the batch brings them back.
+ * A phase task shows only while its batch is in that phase (D26).
  */
 export function listOpenTasks(
 	db: Db,
@@ -132,6 +134,7 @@ export function listOpenTasks(
 			and(
 				isNull(task.doneAt),
 				or(isNull(task.batchId), inArray(batch.status, ['planned', 'active'])),
+				or(isNull(task.phase), eq(task.phase, batch.phase)),
 				filter.batchId ? eq(task.batchId, filter.batchId) : undefined,
 				filter.dueThrough ? lte(task.dueAt, filter.dueThrough) : undefined
 			)
@@ -156,36 +159,80 @@ export function todayTasks(db: Db, today: string = localDate()) {
 }
 
 /**
- * Creates the tasks a batch's protocol snapshot lists (D19). For a batch
- * entered after the fact, a repeating task starts at its first repeat on or
- * after today and a one-off already in the past is skipped.
+ * Task rows for templates whose day count starts on `base`. A start in the
+ * past (a batch or check-in entered after the fact) moves a repeating task to
+ * its first repeat on or after today and skips a one-off.
  */
-export function createTasksFromTemplates(
-	db: Db,
-	b: Pick<Batch, 'id' | 'startedAt' | 'protocolSnapshotJson'>,
-	today: string = localDate()
-): Task[] {
-	const templates = bodyTasks(b.protocolSnapshotJson?.body);
-	if (!templates.length || !b.startedAt) return [];
-	const day0 = localDate(b.startedAt);
-
+function rowsFromTemplates(
+	batchId: string,
+	templates: TaskTemplate[],
+	base: string,
+	today: string
+) {
 	const rows = [];
 	for (const tpl of templates) {
 		const days = recurrenceDays(tpl.recurrence);
-		const repeatUntil = days !== null && tpl.endDay !== null ? addDays(day0, tpl.endDay) : null;
-		let dueAt = addDays(day0, tpl.startDay);
+		const repeatUntil =
+			days !== null && tpl.endDay !== null && !tpl.phase ? addDays(base, tpl.endDay) : null;
+		let dueAt = addDays(base, tpl.startDay);
 		if (dueAt < today) {
 			if (days === null) continue;
 			dueAt = addDays(dueAt, Math.ceil(daysBetween(dueAt, today) / days) * days);
 		}
 		if (repeatUntil && dueAt > repeatUntil) continue;
 		rows.push({
-			batchId: b.id,
+			batchId,
 			title: tpl.title,
 			dueAt,
 			recurrence: days !== null ? recurrenceFor(days) : null,
-			repeatUntil
+			repeatUntil,
+			phase: tpl.phase ?? null
 		});
 	}
+	return rows;
+}
+
+/**
+ * Creates the tasks a batch's protocol snapshot lists (D19): the day-counted
+ * ones, plus the phase tasks (D26) of the phase the batch starts in.
+ */
+export function createTasksFromTemplates(
+	db: Db,
+	b: Pick<Batch, 'id' | 'startedAt' | 'protocolSnapshotJson' | 'phase'>,
+	today: string = localDate()
+): Task[] {
+	const templates = bodyTasks(b.protocolSnapshotJson?.body).filter(
+		(t) => !t.phase || t.phase === b.phase
+	);
+	if (!templates.length || !b.startedAt) return [];
+	const rows = rowsFromTemplates(b.id, templates, localDate(b.startedAt), today);
+	return rows.length ? db.insert(task).values(rows).returning().all() : [];
+}
+
+/**
+ * Runs when a batch moves to another phase (D26): open tasks of the phase it
+ * left are removed (done ones stay in the history), and the protocol's tasks
+ * for the new phase are created, counted from the day of the move.
+ */
+export function applyPhaseChange(
+	db: Db,
+	b: Pick<Batch, 'id' | 'protocolSnapshotJson'>,
+	to: string | null,
+	at: string = nowIso(),
+	today: string = localDate()
+): Task[] {
+	db.delete(task)
+		.where(
+			and(
+				eq(task.batchId, b.id),
+				isNull(task.doneAt),
+				isNotNull(task.phase),
+				to ? ne(task.phase, to) : undefined
+			)
+		)
+		.run();
+	if (!to) return [];
+	const templates = bodyTasks(b.protocolSnapshotJson?.body).filter((t) => t.phase === to);
+	const rows = rowsFromTemplates(b.id, templates, localDate(at), today);
 	return rows.length ? db.insert(task).values(rows).returning().all() : [];
 }

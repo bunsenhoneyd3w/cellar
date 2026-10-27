@@ -16,7 +16,7 @@ import type { ProtocolSnapshot } from '../protocol-body';
 import { nowIso } from '../time';
 import { InputError } from './form';
 import { getProtocol } from './protocols';
-import { createTasksFromTemplates } from './tasks';
+import { applyPhaseChange, createTasksFromTemplates } from './tasks';
 import { contaminationsFor, flushSummary } from './grows';
 
 export { batchName } from '../batch-name';
@@ -117,6 +117,7 @@ export function updateBatch(db: Db, id: string, input: BatchEditInput): Batch {
 			.returning()
 			.get();
 		setEquipment(tx, id, input.equipmentIds ?? []);
+		if (row.phase !== current.phase) applyPhaseChange(tx, row, row.phase);
 		return row;
 	});
 }
