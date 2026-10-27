@@ -17,6 +17,7 @@ import {
 	useByState,
 	useOne
 } from './inventory';
+import { readItemForm } from './inventory-form';
 import { emptyBody } from '../protocol-body';
 
 const today = '2026-10-27';
@@ -154,5 +155,31 @@ describe('inventory items', () => {
 		db.$client.prepare('delete from task where batch_id = ?').run(batch.id);
 		db.$client.prepare('delete from batch where id = ?').run(batch.id);
 		expect(listInventory(db)[0]).toMatchObject({ id: item.id, batchId: null, batchName: null });
+	});
+});
+
+describe('shelf item form', () => {
+	it('reads the fields, with blanks as null', () => {
+		const fd = new FormData();
+		for (const [k, v] of Object.entries({
+			name: ' Salsa, pint ',
+			quantity: '7',
+			unit: 'jars',
+			spaceId: '',
+			packedAt: '2026-10-27',
+			useBy: '2028-04-27',
+			status: 'bogus'
+		}))
+			fd.set(k, v);
+		expect(readItemForm(fd)).toEqual({
+			name: 'Salsa, pint',
+			quantity: 7,
+			unit: 'jars',
+			spaceId: null,
+			packedAt: '2026-10-27',
+			useBy: '2028-04-27',
+			batchId: null,
+			status: null
+		});
 	});
 });

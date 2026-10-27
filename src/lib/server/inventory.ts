@@ -2,9 +2,12 @@ import { and, asc, eq, ne } from 'drizzle-orm';
 import type { Db } from './db';
 import { batch, inventoryItem } from './db/schema';
 import type { InventoryStatus } from '../enums';
-import { addMonths, isDate, localDate } from '../time';
+import { isDate, localDate } from '../time';
+import { statusFor, useByState, type UseByState } from '../shelf';
 import { InputError } from './form';
 import { listSpaces } from './spaces';
+
+export { defaultUseBy, statusFor, useByState, type UseByState } from '../shelf';
 
 export type InventoryItem = typeof inventoryItem.$inferSelect;
 
@@ -23,41 +26,6 @@ export type ItemInput = {
 	batchId?: string | null;
 	status?: InventoryStatus | null;
 };
-
-/** At or below this many left, an item shows as low (D31). */
-export const LOW_AT = 2;
-
-/** "Soon" on the use-by view: within this many months of the use-by date (D30). */
-export const SOON_MONTHS = 2;
-
-/** Gone at 0, low at 2 or fewer, in stock above (D31). */
-export function statusFor(quantity: number): InventoryStatus {
-	if (quantity <= 0) return 'gone';
-	if (quantity <= LOW_AT) return 'low';
-	return 'in_stock';
-}
-
-/** The use-by a protocol's shelf life gives a packed date (D30), or null without one. */
-export function defaultUseBy(
-	packedAt: string | null | undefined,
-	shelfLifeMonths: number | null | undefined
-): string | null {
-	if (!isDate(packedAt) || !shelfLifeMonths) return null;
-	return addMonths(packedAt, shelfLifeMonths);
-}
-
-export type UseByState = 'past' | 'soon' | 'ok';
-
-/** Past its use-by, within 2 months of it, or fine; null when there is no use-by. */
-export function useByState(
-	useBy: string | null | undefined,
-	today: string = localDate()
-): UseByState | null {
-	if (!useBy) return null;
-	if (useBy < today) return 'past';
-	if (useBy <= addMonths(today, SOON_MONTHS)) return 'soon';
-	return 'ok';
-}
 
 function values(db: Db, input: ItemInput) {
 	const name = input.name.trim();

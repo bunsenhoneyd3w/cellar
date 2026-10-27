@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getDb } from '#lib/server/db/index.ts';
 import { getSpace, listSpaces, updateSpace } from '#lib/server/spaces.ts';
+import { listInventory } from '#lib/server/inventory.ts';
 import { oneOf, str } from '#lib/server/form.ts';
 import { inputFail } from '#lib/server/actions.ts';
 import { SPACE_KINDS } from '#lib/enums.ts';
@@ -10,7 +11,7 @@ export const load: PageServerLoad = ({ params }) => {
 	const db = getDb();
 	const space = getSpace(db, params.id);
 	if (!space) error(404, 'Space not found');
-	return { space, spaces: listSpaces(db) };
+	return { space, spaces: listSpaces(db), items: listInventory(db, { spaceId: params.id }) };
 };
 
 export const actions: Actions = {
