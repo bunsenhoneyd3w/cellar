@@ -12,6 +12,15 @@
 			"runtimeExecutable": "bash",
 			"runtimeArgs": ["-c", ". \"$HOME/.nvm/nvm.sh\" && npm run dev:scratch"],
 			"port": 5175
+		},
+		{
+			"name": "cellar-scratch-5176",
+			"runtimeExecutable": "bash",
+			"runtimeArgs": [
+				"-c",
+				". \"$HOME/.nvm/nvm.sh\" && CELLAR_DATA_DIR=.scratch/data CELLAR_PHOTOS_DIR=.scratch/photos npx vite dev --host --port 5176 --strictPort"
+			],
+			"port": 5176
 		}
 	]
 }

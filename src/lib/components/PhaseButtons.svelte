@@ -4,15 +4,16 @@
 
 	type Props = { phases: readonly string[]; value: string; name?: string };
 	let { phases, value = $bindable(), name = 'phase' }: Props = $props();
+	const sentence = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 </script>
 
 <div class="grid grid-cols-2 gap-2">
 	{#each phases as ph (ph)}
 		<label
-			class="btn min-h-12 cursor-pointer px-2 capitalize has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
+			class="btn min-h-12 cursor-pointer px-2 has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
 		>
 			<input class="sr-only" type="radio" {name} value={ph} bind:group={value} />
-			{ph}
+			{sentence(ph)}
 		</label>
 	{/each}
 </div>

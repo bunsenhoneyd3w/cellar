@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { trackedKindsFor } from '#lib/reading-kinds.ts';
-	import { fixedPhases, type BatchType } from '#lib/enums.ts';
+	import { fixedPhases, label, type BatchType } from '#lib/enums.ts';
 	import TaskTemplatesField from '#lib/components/TaskTemplatesField.svelte';
 	import { bodyTasks, type ProtocolBody } from '#lib/protocol-body.ts';
 
@@ -119,7 +119,7 @@
 			<div class="space-y-2">
 				{#each phases as ph, i (ph)}
 					<details class="card px-3 py-2" open={hasTargets(ph)}>
-						<summary class="min-h-10 cursor-pointer py-2 font-medium capitalize">{ph}</summary>
+						<summary class="min-h-10 cursor-pointer py-2 font-medium">{label(ph)}</summary>
 						<div class="pb-2">{@render targetRows(ph, `_p${i}`)}</div>
 					</details>
 				{/each}

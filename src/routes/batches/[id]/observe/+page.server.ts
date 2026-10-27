@@ -2,12 +2,14 @@ import { error, redirect } from '@sveltejs/kit';
 import { getDb } from '#lib/server/db/index.ts';
 import { getBatchDetail } from '#lib/server/batches.ts';
 import { saveCheckIn, type ReadingInput } from '#lib/server/observations.ts';
+import { readContaminations } from '#lib/server/check-in-form.ts';
+import { nextFlush } from '#lib/server/grows.ts';
 import { listOpenTasks } from '#lib/server/tasks.ts';
 import { deletePhotoFiles, savePhoto, type SavedPhoto } from '#lib/server/photos.ts';
 import { num, str } from '#lib/server/form.ts';
 import { inputFail } from '#lib/server/actions.ts';
-import { kindsFor } from '#lib/reading-kinds.ts';
-import { PHASE_SUGGESTIONS } from '#lib/enums.ts';
+import { HARVEST_KIND, kindsFor, readingKind, trackedKindsFor } from '#lib/reading-kinds.ts';
+import { PHASE_SUGGESTIONS, fixedPhases } from '#lib/enums.ts';
 import { fromLocalInput, localDate } from '#lib/time.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -21,18 +23,25 @@ export const load: PageServerLoad = ({ params }) => {
 		...detail.readings.map((r) => r.kind),
 		...(b.protocolSnapshotJson?.body.targets.map((t) => t.kind) ?? [])
 	]);
-	const kinds = kindsFor(b.batchType).sort(
+	const kinds = trackedKindsFor(b.batchType).sort(
 		(a, c) => Number(used.has(c.kind)) - Number(used.has(a.kind))
 	);
 	const last: Record<string, number> = {};
 	for (const r of detail.readings) last[r.kind] = r.value;
 
+	const grow = b.batchType === 'mushroom';
 	return {
 		batch: b,
 		kinds,
 		last,
 		targets: b.protocolSnapshotJson?.body.targets ?? [],
 		phases: PHASE_SUGGESTIONS[b.batchType],
+		fixedPhases: fixedPhases(b.batchType),
+		// Grows get the harvest and contamination parts of the check-in (D22, D23).
+		harvest: grow ? readingKind(HARVEST_KIND) : undefined,
+		nextFlush: grow ? nextFlush(getDb(), b.id) : null,
+		lastFlush: detail.flushes.flushes.at(-1),
+		contamination: grow,
 		dueTasks: listOpenTasks(getDb(), { batchId: b.id, dueThrough: localDate() })
 	};
 };
@@ -65,6 +74,7 @@ export const actions: Actions = {
 		}
 
 		try {
+			const harvested = readings.some((r) => r.kind === HARVEST_KIND);
 			saveCheckIn(db, {
 				batchId: params.id,
 				observedAt,
@@ -72,6 +82,9 @@ export const actions: Actions = {
 				note: str(fd, 'note'),
 				readings,
 				photos: saved,
+				contaminations: readContaminations(fd),
+				// The flush stepper always posts; it only counts with a harvest weight.
+				flush: harvested ? num(fd, 'flush') : null,
 				taskIds: fd.getAll('taskId').filter((v): v is string => typeof v === 'string')
 			});
 		} catch (e) {
