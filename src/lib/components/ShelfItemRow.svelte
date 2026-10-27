@@ -2,7 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { formatDay } from '#lib/time.ts';
-	import { formatCount } from '#lib/shelf.ts';
+	import { page } from '$app/state';
+	import { actionWithQuery, formatCount } from '#lib/shelf.ts';
 	import type { ShelfItem } from '#lib/server/inventory.ts';
 	import type { UseByState } from '#lib/shelf.ts';
 
@@ -49,7 +50,7 @@
 	{#if canUse}
 		<form
 			method="POST"
-			action="?/use"
+			action={actionWithQuery('use', page.url.search)}
 			use:enhance={() => {
 				pending = true;
 				return async ({ update }) => {

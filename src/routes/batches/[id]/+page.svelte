@@ -9,6 +9,7 @@
 	import { CONTAMINATION_LABELS } from '#lib/enums.ts';
 	import { bodyProcessing, bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
 	import { READING_KINDS, kindLabel } from '#lib/reading-kinds.ts';
+	import { formatCount } from '#lib/shelf.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -264,6 +265,35 @@
 				<p class="whitespace-pre-line">{data.outcome.wouldChange}</p>
 			{/if}
 		</div>
+	</section>
+{/if}
+
+{#if finished || data.shelfItems.length}
+	<!-- What this batch put on the shelf (D29, D32); more can be added any time. -->
+	<section class="mb-6">
+		<h2 class="section-title">On the shelf</h2>
+		{#if data.shelfItems.length}
+			<ul class="card mb-2 divide-y divide-gray-100">
+				{#each data.shelfItems as item (item.id)}
+					<li>
+						<a
+							href={resolve('/inventory/[id]', { id: item.id })}
+							class="flex justify-between gap-3 px-4 py-2"
+						>
+							<span>
+								{item.name}
+								<span class="block text-sm text-gray-500">{item.spacePath ?? 'No shelf'}</span>
+							</span>
+							<span class="shrink-0 text-right text-gray-700">
+								{item.status === 'gone' ? 'Gone' : formatCount(item.quantity, item.unit)}
+							</span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a class="btn w-full" href={`${resolve('/inventory/new')}?batch=${b.id}`}>Add to shelf</a>
 	</section>
 {/if}
 

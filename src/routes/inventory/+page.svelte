@@ -3,7 +3,8 @@
 	import ShelfItemRow from '#lib/components/ShelfItemRow.svelte';
 	import UndoBar from '#lib/components/UndoBar.svelte';
 	import type { ShelfItem } from '#lib/server/inventory.ts';
-	import { useByState } from '#lib/shelf.ts';
+	import { page } from '$app/state';
+	import { actionWithQuery, useByState } from '#lib/shelf.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -41,7 +42,7 @@
 		form && 'used' in form && form.used
 			? {
 					text: `Used one: ${form.used.name}`,
-					action: '?/undoUse',
+					action: actionWithQuery('undoUse', page.url.search),
 					fields: { itemId: form.used.id, before: form.used.before }
 				}
 			: null

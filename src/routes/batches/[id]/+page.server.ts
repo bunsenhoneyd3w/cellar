@@ -6,13 +6,18 @@ import { deletePhotoFiles } from '#lib/server/photos.ts';
 import { reopenBatch } from '#lib/server/outcomes.ts';
 import { str } from '#lib/server/form.ts';
 import { listOpenTasks } from '#lib/server/tasks.ts';
+import { itemsForBatch } from '#lib/server/inventory.ts';
 import { taskActions } from '#lib/server/task-actions.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ params }) => {
 	const detail = getBatchDetail(getDb(), params.id);
 	if (!detail) error(404, 'Batch not found');
-	return { ...detail, tasks: listOpenTasks(getDb(), { batchId: params.id }) };
+	return {
+		...detail,
+		tasks: listOpenTasks(getDb(), { batchId: params.id }),
+		shelfItems: itemsForBatch(getDb(), params.id)
+	};
 };
 
 export const actions: Actions = {

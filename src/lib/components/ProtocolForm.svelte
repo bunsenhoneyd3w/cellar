@@ -136,7 +136,11 @@
 		{/if}
 	</fieldset>
 
-	<TaskTemplatesField tasks={bodyTasks(body)} {phases} />
+	<TaskTemplatesField
+		tasks={bodyTasks(body)}
+		{phases}
+		placeholder={grow ? 'Mist and fan' : preserve ? 'Check seals' : 'Top up airlock water'}
+	/>
 
 	<div>
 		<label class="label" for="source">Source</label>

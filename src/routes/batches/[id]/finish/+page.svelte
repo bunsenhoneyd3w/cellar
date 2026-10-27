@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
+	import ShelfRowsField from '#lib/components/ShelfRowsField.svelte';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
 	const o = $derived(data.outcome);
 	const editing = $derived(data.batch.status === 'done' || data.batch.status === 'failed');
-	const initialStatus = $derived(data.batch.status === 'failed' || data.failed ? 'failed' : 'done');
+	let status = $state(
+		untrack(() => (data.batch.status === 'failed' || data.failed ? 'failed' : 'done'))
+	);
 	const yieldValue = $derived(o?.yieldValue ?? data.suggested?.value ?? '');
 	const yieldUnit = $derived(o?.yieldUnit ?? data.suggested?.unit ?? '');
 </script>
@@ -15,6 +19,14 @@
 
 {#if form?.error}<p class="error">{form.error}</p>{/if}
 
+{#if !editing && data.openTasks.length}
+	<p class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+		Still open on this batch: {data.openTasks.join(', ')}. Finishing hides
+		{data.openTasks.length === 1 ? 'it' : 'them'}, so tick
+		{data.openTasks.length === 1 ? 'it' : 'them'} off first or finish later.
+	</p>
+{/if}
+
 <form method="POST" use:enhance class="space-y-5">
 	<fieldset>
 		<legend class="label">How did it end?</legend>
@@ -23,13 +35,7 @@
 				<label
 					class="btn cursor-pointer has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
 				>
-					<input
-						class="sr-only"
-						type="radio"
-						name="status"
-						{value}
-						checked={initialStatus === value}
-					/>
+					<input class="sr-only" type="radio" name="status" {value} bind:group={status} />
 					{text}
 				</label>
 			{/each}
@@ -77,6 +83,17 @@
 			Filled in from {data.flushCount} flush{data.flushCount === 1 ? '' : 'es'}. Change it if you
 			weighed more.
 		</p>
+	{/if}
+
+	{#if !editing && status === 'done'}
+		<!-- Jars go on the shelf in the same step (D29); rows left without a count are skipped. -->
+		<details class="card px-3 py-2" open={data.preserve}>
+			<summary class="min-h-10 cursor-pointer py-2 font-medium">Add to shelf</summary>
+			<p class="mb-3 text-sm text-gray-500">
+				One row per jar size or shelf. Leave the count blank to skip a row.
+			</p>
+			<div class="pb-2"><ShelfRowsField rows={data.shelfRows} spaces={data.spaces} /></div>
+		</details>
 	{/if}
 
 	<fieldset>

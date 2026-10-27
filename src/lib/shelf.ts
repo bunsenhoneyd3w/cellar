@@ -49,3 +49,12 @@ export function formatCount(quantity: number | null, unit: string | null): strin
 	if (quantity === null) return '';
 	return `${Math.round(quantity * 100) / 100}${unit ? ` ${unit}` : ''}`;
 }
+
+/**
+ * A form action URL that keeps the page's own query, e.g. "?/use&view=use-by",
+ * so a tap on the use-by view stays on the use-by view.
+ */
+export function actionWithQuery(name: string, search: string): string {
+	const q = search.replace(/^\?/, '');
+	return `?/${name}${q ? `&${q}` : ''}`;
+}
