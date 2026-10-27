@@ -3,7 +3,8 @@
 
 	const links = [
 		{ href: resolve('/spaces'), label: 'Spaces', hint: 'Rooms, shelves, bins, appliances' },
-		{ href: resolve('/equipment'), label: 'Equipment', hint: 'Crocks, airlocks, meters, canners' }
+		{ href: resolve('/equipment'), label: 'Equipment', hint: 'Crocks, airlocks, meters, canners' },
+		{ href: resolve('/settings'), label: 'Settings', hint: 'Backup and export' }
 	];
 </script>
 
