@@ -5,15 +5,19 @@ import { deleteObservation, getObservation } from '#lib/server/observations.ts';
 import { deletePhotoFiles } from '#lib/server/photos.ts';
 import { reopenBatch } from '#lib/server/outcomes.ts';
 import { str } from '#lib/server/form.ts';
+import { listOpenTasks } from '#lib/server/tasks.ts';
+import { taskActions } from '#lib/server/task-actions.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ params }) => {
 	const detail = getBatchDetail(getDb(), params.id);
 	if (!detail) error(404, 'Batch not found');
-	return detail;
+	return { ...detail, tasks: listOpenTasks(getDb(), { batchId: params.id }) };
 };
 
 export const actions: Actions = {
+	...taskActions,
+
 	deleteObservation: async ({ request, params }) => {
 		const db = getDb();
 		const id = str(await request.formData(), 'observationId') ?? '';

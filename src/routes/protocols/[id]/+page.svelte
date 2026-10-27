@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { formatDate } from '#lib/time.ts';
 	import { readingKind } from '#lib/reading-kinds.ts';
-	import { formatRange } from '#lib/protocol-body.ts';
+	import { bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -68,6 +68,20 @@
 				<li class="flex justify-between px-4 py-2">
 					<span>{readingKind(t.kind)?.label ?? t.kind}</span>
 					<span class="text-gray-700">{formatRange(t)}</span>
+				</li>
+			{/each}
+		</ul>
+	</section>
+{/if}
+
+{#if bodyTasks(body).length}
+	<section class="mb-6">
+		<h2 class="section-title">Tasks for each batch</h2>
+		<ul class="card divide-y divide-gray-100">
+			{#each bodyTasks(body) as t, i (i)}
+				<li class="flex justify-between gap-3 px-4 py-2">
+					<span>{t.title}</span>
+					<span class="shrink-0 text-right text-gray-700">{formatTemplate(t)}</span>
 				</li>
 			{/each}
 		</ul>

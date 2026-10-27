@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { kindsFor } from '#lib/reading-kinds.ts';
-	import type { ProtocolBody } from '#lib/protocol-body.ts';
+	import TaskTemplatesField from '#lib/components/TaskTemplatesField.svelte';
+	import { bodyTasks, type ProtocolBody } from '#lib/protocol-body.ts';
 
 	type Values = {
 		name?: string;
@@ -92,6 +93,8 @@
 			{/each}
 		</div>
 	</fieldset>
+
+	<TaskTemplatesField tasks={bodyTasks(body)} />
 
 	<div>
 		<label class="label" for="source">Source</label>
