@@ -6,7 +6,7 @@
 	import UndoBar from '#lib/components/UndoBar.svelte';
 	import { dayNumber, formatDate, formatDateTime } from '#lib/time.ts';
 	import { bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
-	import { READING_KINDS, readingKind } from '#lib/reading-kinds.ts';
+	import { READING_KINDS, kindLabel, readingKind } from '#lib/reading-kinds.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -130,8 +130,10 @@
 		{#if snap.body.targets.length}
 			<h3 class="section-title mt-4">Targets</h3>
 			<ul class="text-gray-700">
-				{#each snap.body.targets as t (t.kind)}
-					<li>{readingKind(t.kind)?.label ?? t.kind}: {formatRange(t)}</li>
+				{#each snap.body.targets as t (`${t.kind}:${t.phase ?? ''}`)}
+					<li>
+						{kindLabel(t.kind, b.batchType)}{t.phase ? ` (${t.phase})` : ''}: {formatRange(t)}
+					</li>
 				{/each}
 			</ul>
 		{/if}

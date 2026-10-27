@@ -1,18 +1,22 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { formatDate } from '#lib/time.ts';
-	import { readingKind } from '#lib/reading-kinds.ts';
+	import { label } from '#lib/enums.ts';
+	import { kindLabel } from '#lib/reading-kinds.ts';
 	import { bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const p = $derived(data.protocol);
 	const body = $derived(p.bodyJson);
+	const grow = $derived(p.batchType === 'mushroom');
 </script>
 
 <h1 class="text-2xl font-bold">{p.name}</h1>
 <p class="mb-4 text-sm text-gray-500">
-	Version {p.version} · saved {formatDate(p.createdAt)}{p.source ? ` · ${p.source}` : ''}
+	{label(p.batchType)} · version {p.version} · saved {formatDate(p.createdAt)}{p.source
+		? ` · ${p.source}`
+		: ''}
 </p>
 
 {#if !data.isLatest}
@@ -39,7 +43,7 @@
 {/if}
 
 <section class="mb-6">
-	<h2 class="section-title">Ingredients</h2>
+	<h2 class="section-title">{grow ? 'Materials' : 'Ingredients'}</h2>
 	{#if body.ingredients.length}
 		<ul class="card divide-y divide-gray-100">
 			{#each body.ingredients as line, i (i)}<li class="px-4 py-2">{line}</li>{/each}
@@ -50,7 +54,7 @@
 </section>
 
 <section class="mb-6">
-	<h2 class="section-title">Steps</h2>
+	<h2 class="section-title">{grow ? 'Tek steps' : 'Steps'}</h2>
 	{#if body.steps.length}
 		<ol class="card list-inside list-decimal divide-y divide-gray-100">
 			{#each body.steps as line, i (i)}<li class="px-4 py-2">{line}</li>{/each}
@@ -64,9 +68,12 @@
 	<section class="mb-6">
 		<h2 class="section-title">Target ranges</h2>
 		<ul class="card divide-y divide-gray-100">
-			{#each body.targets as t (t.kind)}
-				<li class="flex justify-between px-4 py-2">
-					<span>{readingKind(t.kind)?.label ?? t.kind}</span>
+			{#each body.targets as t (`${t.kind}:${t.phase ?? ''}`)}
+				<li class="flex justify-between gap-3 px-4 py-2">
+					<span>
+						{kindLabel(t.kind, p.batchType)}
+						{#if t.phase}<span class="text-gray-500">· {t.phase}</span>{/if}
+					</span>
 					<span class="text-gray-700">{formatRange(t)}</span>
 				</li>
 			{/each}

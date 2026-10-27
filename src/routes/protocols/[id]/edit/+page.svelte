@@ -10,4 +10,9 @@
 	Saving makes version {data.protocol.version + 1}. Batches already started keep the version they
 	began with.
 </p>
-<ProtocolForm values={data.protocol} error={form?.error} submitLabel="Save as new version" />
+<ProtocolForm
+	values={data.protocol}
+	batchType={data.protocol.batchType}
+	error={form?.error}
+	submitLabel="Save as new version"
+/>

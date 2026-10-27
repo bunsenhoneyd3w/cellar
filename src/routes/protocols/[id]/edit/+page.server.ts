@@ -19,7 +19,11 @@ export const actions: Actions = {
 		const fd = await request.formData();
 		let id: string;
 		try {
-			id = reviseProtocol(db, params.id, readProtocolForm(fd, current.bodyJson)).id;
+			id = reviseProtocol(
+				db,
+				params.id,
+				readProtocolForm(fd, current.bodyJson, current.batchType)
+			).id;
 		} catch (e) {
 			return inputFail(e);
 		}
