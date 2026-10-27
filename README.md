@@ -18,6 +18,8 @@ npm run dev
 
 Open the "Network" URL that Vite prints on the phone, or `http://localhost:5173` on the laptop.
 
+To try things without touching your real data, `npm run dev:scratch` runs on port 5175 and keeps its database and photos in `.scratch/` instead.
+
 ## Production build (the Raspberry Pi path)
 
 ```sh
@@ -25,7 +27,27 @@ npm run build
 npm start
 ```
 
-Serves on port 3000. Set `PORT` to change it.
+Serves on port 3000 over plain HTTP, reachable from the phone at the laptop's network address. Set `PORT` to change it. `npm start` runs `server.js`, which accepts uploads up to 500 MB (phone photos, Paprika exports); see D16 in `DECISIONS.md`.
+
+## Where the data lives
+
+| What | Default | Move it with |
+|---|---|---|
+| Database | `data/cellar.db` | `CELLAR_DATA_DIR` |
+| Photos | `photos/` (resized copies), `photos/originals/` | `CELLAR_PHOTOS_DIR` |
+
+Copying those two is a complete backup. Copy the database while the app is stopped, or also copy the `cellar.db-wal` and `cellar.db-shm` files next to it. Settings in the app downloads every table as CSV or JSON.
+
+The app creates the database and applies any pending migrations when it starts. After changing `src/lib/server/db/schema.ts`, run `npm run db:generate` to write the next migration into `drizzle/`, and commit it.
+
+## Using it (Phase 1: ferments)
+
+1. More, Spaces: add the basement room, then shelves inside it.
+2. More, Equipment: add jars, crocks, airlocks, meters.
+3. Protocols, Import from Paprika: in Paprika choose File, Export, then pick the `.paprikarecipes` file and tick the ferments. Edit a protocol to add target ranges (pH, salinity) and expected days; each edit is a new version.
+4. Start batch from a protocol. The method is frozen into the batch at that moment.
+5. Add observation from the batch page, on the phone: photos, readings, note, phase.
+6. Finish batch: done or failed, yield, rating, what to change.
 
 ## Other commands
 
@@ -33,5 +55,7 @@ Serves on port 3000. Set `PORT` to change it.
 |---|---|
 | `npm run check` | Type-checks Svelte and TypeScript |
 | `npm test` | Runs the unit tests once |
+| `npm run dev:scratch` | Dev server with throwaway data in `.scratch/` |
+| `npm run db:generate` | Writes a migration after a schema change |
 | `npm run lint` | Prettier and ESLint checks |
 | `npm run format` | Formats the code |
