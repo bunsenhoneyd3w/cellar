@@ -6,7 +6,8 @@ import path from 'node:path';
 import { testDb } from './db/test-helpers';
 import { createProtocol } from './protocols';
 import { createBatch, getBatch, getBatchDetail } from './batches';
-import { createObservation, deleteObservation } from './observations';
+import { createObservation, deleteObservation, saveCheckIn } from './observations';
+import { createTask, getTask, listOpenTasks } from './tasks';
 import { deletePhotoFiles, MAX_DIMENSION, resolveInside, savePhoto } from './photos';
 import { emptyBody } from '../protocol-body';
 
@@ -119,5 +120,59 @@ describe('photos', () => {
 		expect(resolveInside(root, '../secrets.txt')).toBeNull();
 		expect(resolveInside(root, '/etc/passwd')).toBeNull();
 		expect(resolveInside(root, '2026/10/pho_x.jpg')).toBe(path.join(root, '2026/10/pho_x.jpg'));
+	});
+});
+
+describe('check-ins with tasks', () => {
+	it('marks ticked tasks done at the observation time along with the observation', () => {
+		const { db, b } = setup();
+		const t = createTask(db, {
+			title: 'Top up airlock',
+			batchId: b.id,
+			dueAt: '2026-10-27',
+			recurrence: 'weekly'
+		});
+		const at = '2026-10-27T08:00:00-05:00';
+		const { observation, tasksDone } = saveCheckIn(db, {
+			batchId: b.id,
+			observedAt: at,
+			note: 'Topped up',
+			taskIds: [t.id]
+		});
+		expect(observation?.note).toBe('Topped up');
+		expect(tasksDone).toBe(1);
+		expect(getTask(db, t.id)?.doneAt).toBe(at);
+		expect(listOpenTasks(db, { batchId: b.id })[0].dueAt).toBe('2026-11-03');
+	});
+
+	it('ticking tasks alone writes no empty observation', () => {
+		const { db, b } = setup();
+		const t = createTask(db, { title: 'Top up airlock', batchId: b.id, dueAt: '2026-10-27' });
+		const { observation } = saveCheckIn(db, { batchId: b.id, taskIds: [t.id] });
+		expect(observation).toBeNull();
+		expect(getTask(db, t.id)?.doneAt).not.toBeNull();
+		expect(getBatchDetail(db, b.id)!.observations).toHaveLength(0);
+	});
+
+	it('refuses tasks from another batch and a bare phase change, saving nothing', () => {
+		const { db, b } = setup();
+		const other = createTask(db, { title: 'Buy salt' });
+		expect(() => saveCheckIn(db, { batchId: b.id, note: 'Fine', taskIds: [other.id] })).toThrow(
+			/not on this batch/
+		);
+		expect(getBatchDetail(db, b.id)!.observations).toHaveLength(0);
+
+		const t = createTask(db, { title: 'Top up airlock', batchId: b.id, dueAt: '2026-10-27' });
+		expect(() => saveCheckIn(db, { batchId: b.id, phase: 'aging', taskIds: [t.id] })).toThrow(
+			/phase change/
+		);
+		expect(getTask(db, t.id)?.doneAt).toBeNull();
+	});
+
+	it('still asks for something when nothing is ticked', () => {
+		const { db, b } = setup();
+		expect(() => saveCheckIn(db, { batchId: b.id, taskIds: [] })).toThrow(
+			/note, a reading, or a photo/
+		);
 	});
 });

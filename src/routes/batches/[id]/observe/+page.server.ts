@@ -1,13 +1,14 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getDb } from '#lib/server/db/index.ts';
 import { getBatchDetail } from '#lib/server/batches.ts';
-import { createObservation, type ReadingInput } from '#lib/server/observations.ts';
+import { saveCheckIn, type ReadingInput } from '#lib/server/observations.ts';
+import { listOpenTasks } from '#lib/server/tasks.ts';
 import { deletePhotoFiles, savePhoto, type SavedPhoto } from '#lib/server/photos.ts';
 import { num, str } from '#lib/server/form.ts';
 import { inputFail } from '#lib/server/actions.ts';
 import { kindsFor } from '#lib/reading-kinds.ts';
 import { PHASE_SUGGESTIONS } from '#lib/enums.ts';
-import { fromLocalInput } from '#lib/time.ts';
+import { fromLocalInput, localDate } from '#lib/time.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ params }) => {
@@ -31,7 +32,8 @@ export const load: PageServerLoad = ({ params }) => {
 		kinds,
 		last,
 		targets: b.protocolSnapshotJson?.body.targets ?? [],
-		phases: PHASE_SUGGESTIONS[b.batchType]
+		phases: PHASE_SUGGESTIONS[b.batchType],
+		dueTasks: listOpenTasks(getDb(), { batchId: b.id, dueThrough: localDate() })
 	};
 };
 
@@ -63,13 +65,14 @@ export const actions: Actions = {
 		}
 
 		try {
-			createObservation(db, {
+			saveCheckIn(db, {
 				batchId: params.id,
 				observedAt,
 				phase: str(fd, 'phase'),
 				note: str(fd, 'note'),
 				readings,
-				photos: saved
+				photos: saved,
+				taskIds: fd.getAll('taskId').filter((v): v is string => typeof v === 'string')
 			});
 		} catch (e) {
 			deletePhotoFiles(saved.flatMap((s) => [s.path, s.originalPath]));
