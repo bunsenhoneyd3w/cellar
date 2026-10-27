@@ -29,6 +29,16 @@ npm start
 
 Serves on port 3000 over plain HTTP, reachable from the phone at the laptop's network address. Set `PORT` to change it. `npm start` runs `server.js`, which accepts uploads up to 500 MB (phone photos, Paprika exports); see D16 in `DECISIONS.md`.
 
+## Photo reading (Add from photo)
+
+Equipment, Add from photo sends one picture to Claude, which lists the equipment it sees (name, brand, model, kind, count, sizes) for you to check before saving (D42 to D44). It needs an Anthropic API account, which is separate from a Claude subscription:
+
+1. Get a key at console.anthropic.com (API keys).
+2. Copy `.env.example` to `.env` next to `package.json` and paste the key after `ANTHROPIC_API_KEY=`.
+3. Restart Cellar. Settings shows "Photo reading: On".
+
+Each photo costs roughly 5 to 10 cents with the default model (`claude-opus-5-5`). Set `CELLAR_VISION_MODEL` in `.env` to use a different one. Only photos taken on Add from photo are sent; check-in photos never leave the house. Without a key, or without internet, the screen still works and opens a blank card.
+
 ## Where the data lives
 
 | What | Default | Move it with |

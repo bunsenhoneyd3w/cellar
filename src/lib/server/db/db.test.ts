@@ -9,6 +9,8 @@ import { itemsForBatch, listInventory, useOne } from '../inventory';
 import { getBatchDetail } from '../batches';
 import { listOpenTasks } from '../tasks';
 import { compareBatches, compareCandidates, familyBatches } from '../compare';
+import { addEquipmentPhoto, listEquipment, listEquipmentPhotos } from '../equipment';
+import { tableRows } from '../export';
 
 describe('ids', () => {
 	it('are a prefix plus 10 readable characters', () => {
@@ -38,6 +40,7 @@ describe('database', () => {
 				'batch_equipment',
 				'contamination',
 				'equipment',
+				'equipment_photo',
 				'inventory_item',
 				'observation',
 				'outcome',
@@ -281,6 +284,42 @@ describe('migration safety', () => {
 		expect(compareCandidates(db, 'preserve', 'prf_gggggggggg').map((b) => b.sameProtocol)).toEqual([
 			true,
 			true
+		]);
+	});
+
+	// Equipment photos (D46) are a new table. Equipment and the batches that use
+	// it, written on the schema as Phase 5 left it, must still list, take a
+	// photo, and export after the migration.
+	it('keeps equipment written before photos readable', () => {
+		const db = openDb(':memory:', migrationsUpTo(4));
+		const t = '2026-10-20T09:00:00-05:00';
+		db.$client.exec(`
+			insert into space (id, name, kind, created_at, updated_at)
+				values ('spc_eeeeeeeeee', 'Basement lab', 'room', '${t}', '${t}');
+			insert into equipment (id, name, kind, model, specs_json, space_id, created_at, updated_at)
+				values ('eqp_eeeeeeeeee', 'Presto canner', 'canner', '01781', '{"capacity_qt":23}', 'spc_eeeeeeeeee', '${t}', '${t}');
+			insert into batch (id, name, batch_type, started_at, status, created_at, updated_at)
+				values ('bat_eeeeeeeeee', 'Preserve 001 Salsa', 'preserve', '${t}', 'active', '${t}', '${t}');
+			insert into batch_equipment (batch_id, equipment_id, created_at, updated_at) values ('bat_eeeeeeeeee', 'eqp_eeeeeeeeee', '${t}', '${t}');
+		`);
+
+		migrateToLatest(db);
+
+		expect(listEquipment(db)).toEqual([
+			expect.objectContaining({
+				id: 'eqp_eeeeeeeeee',
+				specsJson: { capacity_qt: 23 },
+				spaceName: 'Basement lab',
+				thumb: null
+			})
+		]);
+		addEquipmentPhoto(db, 'eqp_eeeeeeeeee', { path: '2026/10/a.jpg', originalPath: null });
+		expect(listEquipmentPhotos(db, 'eqp_eeeeeeeeee')).toHaveLength(1);
+		expect(getBatchDetail(db, 'bat_eeeeeeeeee')?.equipment.map((e) => e.id)).toEqual([
+			'eqp_eeeeeeeeee'
+		]);
+		expect(tableRows(db, 'equipment_photo')).toEqual([
+			expect.objectContaining({ equipment_id: 'eqp_eeeeeeeeee', path: '2026/10/a.jpg' })
 		]);
 	});
 });

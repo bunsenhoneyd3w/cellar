@@ -63,6 +63,26 @@ export const equipment = sqliteTable('equipment', {
 	...stamps()
 });
 
+/**
+ * A photo of a piece of equipment (D45, D46). One file can sit on several rows:
+ * a shelf photo stays with every item it added. Paths are relative to the photos folder.
+ */
+export const equipmentPhoto = sqliteTable(
+	'equipment_photo',
+	{
+		id: id('eph'),
+		equipmentId: text('equipment_id')
+			.notNull()
+			.references(() => equipment.id, { onDelete: 'cascade' }),
+		path: text('path').notNull(),
+		originalPath: text('original_path'),
+		caption: text('caption'),
+		takenAt: text('taken_at'),
+		...stamps()
+	},
+	(t) => [index('equipment_photo_equipment').on(t.equipmentId)]
+);
+
 /** Each edit inserts a new row with the same family_id and version + 1. */
 export const protocol = sqliteTable(
 	'protocol',
@@ -239,6 +259,7 @@ export const task = sqliteTable(
 export const ALL_TABLES = {
 	space,
 	equipment,
+	equipment_photo: equipmentPhoto,
 	protocol,
 	batch,
 	batch_equipment: batchEquipment,

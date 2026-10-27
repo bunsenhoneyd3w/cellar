@@ -11,11 +11,17 @@
 		spaceId?: string | null;
 		notes?: string | null;
 	};
-	type Props = { values?: Values; spaces: SpaceNode[]; error?: string; submitLabel: string };
-	let { values = {}, spaces, error, submitLabel }: Props = $props();
+	type Props = {
+		values?: Values;
+		spaces: SpaceNode[];
+		error?: string;
+		submitLabel: string;
+		action?: string;
+	};
+	let { values = {}, spaces, error, submitLabel, action }: Props = $props();
 </script>
 
-<form method="POST" use:enhance class="space-y-4">
+<form method="POST" {action} use:enhance class="space-y-4">
 	{#if error}<p class="error">{error}</p>{/if}
 
 	<div>
