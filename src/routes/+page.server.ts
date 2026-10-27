@@ -3,6 +3,7 @@ import { listBatches } from '#lib/server/batches.ts';
 import { todayTasks } from '#lib/server/tasks.ts';
 import { shelfSummary } from '#lib/server/inventory.ts';
 import { taskActions } from '#lib/server/task-actions.ts';
+import { setupProgress } from '#lib/server/setup.ts';
 import { localDate } from '#lib/time.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -13,7 +14,8 @@ export const load: PageServerLoad = () => {
 		today,
 		tasks: todayTasks(db, today),
 		shelf: shelfSummary(db, today),
-		batches: listBatches(db, { status: ['active', 'planned'] })
+		batches: listBatches(db, { status: ['active', 'planned'] }),
+		setup: setupProgress(db)
 	};
 };
 

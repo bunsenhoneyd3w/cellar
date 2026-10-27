@@ -21,6 +21,15 @@
 				". \"$HOME/.nvm/nvm.sh\" && CELLAR_DATA_DIR=.scratch/data CELLAR_PHOTOS_DIR=.scratch/photos npx vite dev --host --port 5176 --strictPort"
 			],
 			"port": 5176
+		},
+		{
+			"name": "cellar-scratch-empty",
+			"runtimeExecutable": "bash",
+			"runtimeArgs": [
+				"-c",
+				". \"$HOME/.nvm/nvm.sh\" && CELLAR_DATA_DIR=.scratch/empty/data CELLAR_PHOTOS_DIR=.scratch/empty/photos npx vite dev --host --port 5177 --strictPort"
+			],
+			"port": 5177
 		}
 	]
 }

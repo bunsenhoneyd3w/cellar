@@ -1,10 +1,14 @@
 <script lang="ts">
+	import IconPlant from '@tabler/icons-svelte-runes/icons/plant';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import TaskRow from '#lib/components/TaskRow.svelte';
 	import UndoBar from '#lib/components/UndoBar.svelte';
 	import BatchPhoto from '#lib/components/BatchPhoto.svelte';
 	import TypeChip from '#lib/components/TypeChip.svelte';
 	import { dayNumber, formatDate } from '#lib/time.ts';
+	import IconCircle from '@tabler/icons-svelte-runes/icons/circle';
+	import IconCircleCheck from '@tabler/icons-svelte-runes/icons/circle-check';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -27,6 +31,22 @@
 		return `${parts.join(', ')}.`;
 	});
 	const dueFor = (batchId: string) => dueNow.filter((x) => x.batchId === batchId).length;
+
+	// Shown until the first batch exists; each step ticks itself off from the data.
+	const steps = $derived([
+		{ done: data.setup.space, label: 'Add the room and its shelves', href: resolve('/spaces/new') },
+		{
+			done: data.setup.equipment,
+			label: 'Add equipment from a photo',
+			href: resolve('/equipment/scan')
+		},
+		{
+			done: data.setup.protocol,
+			label: 'Import a recipe or write a protocol',
+			href: resolve('/protocols')
+		},
+		{ done: data.setup.batch, label: 'Start your first batch', href: resolve('/batches/new') }
+	]);
 
 	function lastSeen(iso: string | null) {
 		if (!iso) return 'No observations yet';
@@ -106,13 +126,49 @@
 	</section>
 {/if}
 
+{#if !data.setup.batch}
+	<section class="card mb-6 px-4 py-3">
+		<h2 class="title mb-1 text-lg">Set up your cellar</h2>
+		<p class="mb-2 text-sm text-ink-muted">A few steps and Cellar is ready for real batches.</p>
+		<ol class="divide-y divide-line">
+			{#each steps as s (s.label)}
+				<li>
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+					<a href={s.href} class="flex min-h-12 items-center gap-3 py-2">
+						{#if s.done}
+							<IconCircleCheck
+								size={24}
+								stroke={1.75}
+								class="shrink-0 text-accent"
+								aria-hidden="true"
+							/>
+							<span class="text-ink-muted line-through">{s.label}</span>
+							<span class="sr-only">(done)</span>
+						{:else}
+							<IconCircle
+								size={24}
+								stroke={1.5}
+								class="shrink-0 text-ink-faint"
+								aria-hidden="true"
+							/>
+							<span class="font-medium">{s.label}</span>
+						{/if}
+					</a>
+				</li>
+			{/each}
+		</ol>
+	</section>
+{/if}
+
 <section class="mb-6">
 	<h2 class="section-title">Active batches</h2>
 	{#if data.batches.length === 0}
-		<p class="empty">
-			No batches running.
-			<a class="underline" href={resolve('/batches/new')}>Start a batch</a>
-		</p>
+		<EmptyState icon={IconPlant} title="Nothing growing right now">
+			Start a batch and it shows up here with its latest photo.
+			{#snippet actions()}
+				<a class="btn-primary" href={resolve('/batches/new')}>Start a batch</a>
+			{/snippet}
+		</EmptyState>
 	{:else}
 		<!-- Photo first (D49): what you are tending, at a glance. -->
 		<ul class="grid grid-cols-2 gap-3">

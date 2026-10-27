@@ -1,6 +1,6 @@
-import { asc, eq, sql } from 'drizzle-orm';
+import { asc, eq, inArray, sql } from 'drizzle-orm';
 import type { Db } from './db';
-import { equipment, equipmentPhoto, space } from './db/schema';
+import { equipment, equipmentPhoto, photo, space } from './db/schema';
 import type { EquipmentKind } from '../enums';
 import { InputError } from './form';
 import { existsSync } from 'node:fs';
@@ -141,6 +141,29 @@ export function saveScannedEquipment(
 			return row;
 		})
 	);
+}
+
+/**
+ * Throws away the photo from a review that was not saved. Only a file that no
+ * check-in and no equipment uses is deleted, so a stale or edited form can
+ * never remove a photo that belongs to something.
+ */
+export function discardScanPhoto(
+	db: Db,
+	saved: { path: string; originalPath: string | null },
+	root = photosDir()
+): boolean {
+	const paths = [saved.path, saved.originalPath].filter((p): p is string => !!p);
+	if (!paths.every((p) => resolveInside(root, p))) return false;
+	const used =
+		db
+			.select({ id: equipmentPhoto.id })
+			.from(equipmentPhoto)
+			.where(inArray(equipmentPhoto.path, paths))
+			.get() ?? db.select({ id: photo.id }).from(photo).where(inArray(photo.path, paths)).get();
+	if (used) return false;
+	deletePhotoFiles(paths, root);
+	return true;
 }
 
 /**

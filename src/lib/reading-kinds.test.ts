@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	CHART_KINDS,
 	formatGermination,
 	germination,
 	kindLabel,
@@ -99,5 +100,13 @@ describe('batch type lists', () => {
 		expect(bodyWords('seedling').ingredients).toBe('Seeds and supplies');
 		expect(bodyWords('ferment').servings).toBe(true);
 		expect(bodyWords('hydroponic').servings).toBe(false);
+	});
+
+	it('charts everything but harvest weights and seed counts', () => {
+		const kinds = CHART_KINDS.map((k) => k.kind);
+		expect(kinds).toContain('ph');
+		expect(kinds).not.toContain('harvest_weight');
+		expect(kinds).not.toContain('seeds_sown');
+		expect(kinds).not.toContain('seeds_sprouted');
 	});
 });

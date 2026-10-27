@@ -1,4 +1,6 @@
 <script lang="ts">
+	import IconTools from '@tabler/icons-svelte-runes/icons/tools';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import { label } from '#lib/enums.ts';
 	import type { PageProps } from './$types';
@@ -13,7 +15,10 @@
 <a class="btn-primary mb-5 w-full" href={resolve('/equipment/scan')}>Add from photo</a>
 
 {#if data.equipment.length === 0}
-	<p class="empty">No equipment yet. Add crocks, jars, airlocks, and meters you use.</p>
+	<EmptyState icon={IconTools} title="No equipment yet">
+		Take a photo of a shelf and the crocks, jars, lights, and meters on it get listed for you to
+		check.
+	</EmptyState>
 {:else}
 	<ul class="card divide-y divide-line">
 		{#each data.equipment as e (e.id)}

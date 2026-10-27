@@ -1,4 +1,6 @@
 <script lang="ts">
+	import IconHome from '@tabler/icons-svelte-runes/icons/home';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import { label } from '#lib/enums.ts';
 	import type { PageProps } from './$types';
@@ -12,9 +14,9 @@
 </div>
 
 {#if data.spaces.length === 0}
-	<p class="empty">
-		No spaces yet. Start with the room, then add shelves and containers inside it.
-	</p>
+	<EmptyState icon={IconHome} title="Map out the cellar">
+		Start with the room, then add the shelves, bins, and freezers inside it.
+	</EmptyState>
 {:else}
 	<ul class="card divide-y divide-line">
 		{#each data.spaces as s (s.id)}

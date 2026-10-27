@@ -1,4 +1,6 @@
 <script lang="ts">
+	import IconNotebook from '@tabler/icons-svelte-runes/icons/notebook';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import ReadingChart from '#lib/components/ReadingChart.svelte';
@@ -15,7 +17,7 @@
 		formatRange,
 		formatTemplate
 	} from '#lib/protocol-body.ts';
-	import { READING_KINDS, formatGermination, germination, kindLabel } from '#lib/reading-kinds.ts';
+	import { CHART_KINDS, formatGermination, germination, kindLabel } from '#lib/reading-kinds.ts';
 	import { formatCount } from '#lib/shelf.ts';
 	import type { PageProps } from './$types';
 
@@ -26,11 +28,10 @@
 	const day = $derived(b.startedAt ? dayNumber(b.startedAt, b.endedAt) : null);
 
 	// One chart per reading kind: kinds with a protocol target first, then list order.
-	// Harvest weights are left out; the flushes table shows them (D23).
+	// Harvest weights and seed counts are left out; the flushes table and germination line show them.
 	const hasTarget = (kind: string) => !!snap?.body.targets.some((t) => t.kind === kind);
 	const charts = $derived(
-		READING_KINDS.filter((k) => !k.harvest)
-			.map((k) => k.kind)
+		CHART_KINDS.map((k) => k.kind)
 			.filter((kind) => data.readings.some((r) => r.kind === kind))
 			.sort((a, c) => Number(hasTarget(c)) - Number(hasTarget(a)))
 			.map((kind) => {
@@ -348,7 +349,9 @@
 <section class="mb-6">
 	<h2 class="section-title">Timeline</h2>
 	{#if data.observations.length === 0}
-		<p class="empty">No observations yet.</p>
+		<EmptyState icon={IconNotebook} title="No check-ins yet">
+			Add an observation to log readings, photos, and how it's going.
+		</EmptyState>
 	{:else}
 		<ol class="space-y-3">
 			{#each data.observations as o (o.id)}

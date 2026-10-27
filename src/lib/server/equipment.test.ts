@@ -10,6 +10,7 @@ import {
 	addEquipmentPhoto,
 	createEquipment,
 	deleteEquipmentPhoto,
+	discardScanPhoto,
 	listEquipment,
 	listEquipmentPhotos,
 	saveScannedEquipment
@@ -165,5 +166,23 @@ describe('saving equipment from a photo', () => {
 		const outside = readScanForm(shelfPost('../../etc/passwd', pic.originalPath, ''));
 		expect(() => saveScannedEquipment(db, outside, root)).toThrow(/photo is missing/);
 		expect(listEquipment(db)).toEqual([]);
+	});
+});
+
+describe('discarding an unsaved photo review', () => {
+	it('deletes the files only when nothing uses them', async () => {
+		const db = testDb();
+		const unused = await photo();
+		expect(discardScanPhoto(db, unused, root)).toBe(true);
+		expect(existsSync(path.join(root, unused.path))).toBe(false);
+		expect(existsSync(path.join(root, unused.originalPath))).toBe(false);
+
+		const kept = await photo();
+		const crock = createEquipment(db, { name: 'Crock', kind: 'fermenter' });
+		addEquipmentPhoto(db, crock.id, kept);
+		expect(discardScanPhoto(db, kept, root)).toBe(false);
+		expect(existsSync(path.join(root, kept.path))).toBe(true);
+
+		expect(discardScanPhoto(db, { path: '../../etc/hosts', originalPath: null }, root)).toBe(false);
 	});
 });

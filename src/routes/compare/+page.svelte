@@ -1,9 +1,11 @@
 <script lang="ts">
+	import IconChart from '@tabler/icons-svelte-runes/icons/chart-line';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import CompareChart from '#lib/components/CompareChart.svelte';
 	import { harvestWord, label } from '#lib/enums.ts';
 	import { MAX_COMPARE, SERIES_STYLES } from '#lib/compare.ts';
-	import { READING_KINDS, formatGermination, kindLabel } from '#lib/reading-kinds.ts';
+	import { CHART_KINDS, formatGermination, kindLabel } from '#lib/reading-kinds.ts';
 	import { dayNumber, formatDate } from '#lib/time.ts';
 	import type { PageProps } from './$types';
 
@@ -27,8 +29,7 @@
 	// One chart per reading kind any of them has: kinds with a shared target
 	// first, as on the batch page, then the reading list's order.
 	const charts = $derived(
-		READING_KINDS.filter((k) => !k.harvest)
-			.map((k) => k.kind)
+		CHART_KINDS.map((k) => k.kind)
 			.filter((kind) => styled.some((b) => b.readings.some((r) => r.kind === kind)))
 			.sort((a, z) => Number(!!c?.targets[z]) - Number(!!c?.targets[a]))
 			.map((kind) => {
@@ -100,7 +101,10 @@
 			{/each}
 		</div>
 	{:else}
-		<p class="empty">Comparing needs two batches of the same kind.</p>
+		<EmptyState icon={IconChart} title="Nothing to compare yet">
+			Comparing needs two batches of the same kind. Once there are two, they line up here day by
+			day.
+		</EmptyState>
 	{/if}
 {:else if data.mode === 'pick'}
 	<p class="mb-4 text-ink-muted">

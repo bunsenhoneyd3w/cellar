@@ -1,4 +1,6 @@
 <script lang="ts">
+	import IconBook from '@tabler/icons-svelte-runes/icons/book-2';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import BatchForm from '#lib/components/BatchForm.svelte';
 	import type { PageProps } from './$types';
@@ -14,11 +16,13 @@
 <h1 class="mb-5 text-2xl font-bold">Start a batch</h1>
 
 {#if data.protocols.length === 0}
-	<p class="empty">
-		A batch follows a protocol.
-		<a class="underline" href={resolve('/protocols/import')}>Import a recipe from Paprika</a> or
-		<a class="underline" href={resolve('/protocols/new')}>write a protocol</a> first.
-	</p>
+	<EmptyState icon={IconBook} title="First, a protocol">
+		A batch follows a protocol, so it starts with the method you'll use.
+		{#snippet actions()}
+			<a class="btn-primary" href={resolve('/protocols/import')}>Import from Paprika</a>
+			<a class="btn" href={resolve('/protocols/new')}>Write one</a>
+		{/snippet}
+	</EmptyState>
 {:else}
 	<BatchForm
 		values={{ protocolId: preselect, startedAt: data.startedAt }}

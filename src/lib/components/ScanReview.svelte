@@ -211,6 +211,15 @@
 		>Add an item it missed</button
 	>
 
+	<button
+		class="w-full py-2 text-center text-ink-muted underline"
+		formaction="?/discard"
+		formnovalidate
+		onclick={(e) => {
+			if (!confirm('Throw away this photo and the list?')) e.preventDefault();
+		}}>Discard this photo</button
+	>
+
 	<div
 		class="sticky z-10 -mx-4 bg-paper/95 px-4 py-3"
 		style="bottom: calc(3.5rem + env(safe-area-inset-bottom))"

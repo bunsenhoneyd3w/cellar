@@ -1,4 +1,6 @@
 <script lang="ts">
+	import IconFlask from '@tabler/icons-svelte-runes/icons/flask';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import BatchPhoto from '#lib/components/BatchPhoto.svelte';
 	import TypeChip from '#lib/components/TypeChip.svelte';
@@ -82,7 +84,13 @@
 {/if}
 
 {#if data.batches.length === 0}
-	<p class="empty">No batches here yet.</p>
+	<EmptyState icon={IconFlask} title="No batches here">
+		{data.type || data.space
+			? 'Try another kind or place.'
+			: data.show === 'finished'
+				? 'Finished batches show up here with how they turned out.'
+				: 'Start one from a protocol.'}
+	</EmptyState>
 {:else}
 	<ul class="card divide-y divide-line">
 		{#each data.batches as b (b.id)}

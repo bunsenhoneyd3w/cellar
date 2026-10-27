@@ -1,4 +1,6 @@
 <script lang="ts">
+	import IconArchive from '@tabler/icons-svelte-runes/icons/archive';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import ShelfItemRow from '#lib/components/ShelfItemRow.svelte';
 	import UndoBar from '#lib/components/UndoBar.svelte';
@@ -71,9 +73,9 @@
 {#if form && 'error' in form && form.error}<p class="error">{form.error}</p>{/if}
 
 {#if data.items.length === 0}
-	<p class="empty">
-		Nothing on the shelf yet. Finish a batch to add its jars, or add an item by hand.
-	</p>
+	<EmptyState icon={IconArchive} title="The shelf is empty">
+		Finish a canning or ferment batch to put its jars here, or add an item by hand.
+	</EmptyState>
 {:else}
 	{#each groups as g (g.title)}
 		<section class="mb-6">
