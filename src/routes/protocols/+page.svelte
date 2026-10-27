@@ -1,6 +1,8 @@
 <script lang="ts">
+	import IconBook from '@tabler/icons-svelte-runes/icons/book-2';
+	import EmptyState from '#lib/components/EmptyState.svelte';
+	import TypeChip from '#lib/components/TypeChip.svelte';
 	import { resolve } from '$app/paths';
-	import { label } from '#lib/enums.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -14,17 +16,19 @@
 </div>
 
 {#if data.protocols.length === 0}
-	<p class="empty">
-		No protocols yet. Import a recipe from Paprika, or write a recipe or grow tek.
-	</p>
+	<EmptyState icon={IconBook} title="No protocols yet">
+		A protocol is the method a batch follows: a recipe, a grow tek, or a seed-starting plan. Import
+		one from Paprika or write your own.
+	</EmptyState>
 {:else}
-	<ul class="card divide-y divide-gray-200">
+	<ul class="card divide-y divide-line">
 		{#each data.protocols as p (p.id)}
 			<li>
 				<a href={resolve('/protocols/[id]', { id: p.id })} class="block px-4 py-3">
-					<span class="block font-medium">{p.name}</span>
-					<span class="block text-sm text-gray-500">
-						{label(p.batchType)} · version {p.version}{p.source ? ` · ${p.source}` : ''}
+					<TypeChip type={p.batchType} />
+					<span class="mt-0.5 block font-medium">{p.name}</span>
+					<span class="block text-sm text-ink-muted">
+						Version {p.version}{p.source ? ` · ${p.source}` : ''}
 					</span>
 				</a>
 			</li>

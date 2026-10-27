@@ -117,6 +117,12 @@ export function targetKindsFor(type: BatchType): ReadingKind[] {
 	return trackedKindsFor(type).filter((k) => !k.count);
 }
 
+/**
+ * Kinds that get a line chart, in list order. Harvest weights have their own
+ * table (D23) and seed counts their germination line (D37), so neither is charted.
+ */
+export const CHART_KINDS: ReadingKind[] = READING_KINDS.filter((k) => !k.harvest && !k.count);
+
 export type Germination = { sown: number; sprouted: number; rate: number };
 
 /**

@@ -67,8 +67,8 @@
 				<button
 					type="button"
 					class="min-h-12 rounded-lg border px-1 text-sm font-medium {dueAt === q.value
-						? 'border-gray-800 bg-gray-800 text-white'
-						: 'border-gray-300 bg-white text-gray-800'}"
+						? 'border-accent bg-accent text-on-accent'
+						: 'border-line-strong bg-card text-ink'}"
 					aria-pressed={dueAt === q.value}
 					onclick={() => (dueAt = q.value)}>{q.label}</button
 				>
@@ -121,7 +121,7 @@
 				type="date"
 				value={values.repeatUntil ?? ''}
 			/>
-			<p class="mt-1 text-sm text-gray-500">
+			<p class="mt-1 text-sm text-ink-muted">
 				Optional. Leave empty to keep repeating until the batch is finished or you delete the task.
 			</p>
 		</div>

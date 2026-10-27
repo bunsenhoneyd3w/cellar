@@ -45,7 +45,7 @@
 
 <fieldset>
 	<legend class="label">Tasks for each batch</legend>
-	<p class="mb-2 text-sm text-gray-500">
+	<p class="mb-2 text-sm text-ink-muted">
 		Added to every batch started from this protocol. Day 0 is the start day.{phases.length
 			? ' A phase task starts when the batch enters its phase and stops when it leaves.'
 			: ''}
@@ -71,7 +71,7 @@
 				</div>
 				<div class="grid grid-cols-2 gap-2">
 					{#if phases.length}
-						<label class="col-span-2 text-sm text-gray-600">
+						<label class="col-span-2 text-sm text-ink-muted">
 							When
 							<select
 								class="input mt-1"
@@ -87,7 +87,7 @@
 							</select>
 						</label>
 					{/if}
-					<label class="text-sm text-gray-600">
+					<label class="text-sm text-ink-muted">
 						{row.phase ? 'Days into the phase' : 'First day'}
 						<input
 							class="input mt-1"
@@ -98,7 +98,7 @@
 							bind:value={row.startDay}
 						/>
 					</label>
-					<label class="text-sm text-gray-600">
+					<label class="text-sm text-ink-muted">
 						Repeat
 						<select class="input mt-1" name="task_{i}_repeat" bind:value={row.repeat}>
 							<option value="">Once</option>
@@ -108,7 +108,7 @@
 						</select>
 					</label>
 					{#if row.repeat === 'every'}
-						<label class="text-sm text-gray-600">
+						<label class="text-sm text-ink-muted">
 							Every how many days
 							<input
 								class="input mt-1"
@@ -122,7 +122,7 @@
 						</label>
 					{/if}
 					{#if row.repeat && !row.phase}
-						<label class="text-sm text-gray-600">
+						<label class="text-sm text-ink-muted">
 							Last day (optional)
 							<input
 								class="input mt-1"

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import IconTools from '@tabler/icons-svelte-runes/icons/tools';
+	import EmptyState from '#lib/components/EmptyState.svelte';
 	import { resolve } from '$app/paths';
 	import { label } from '#lib/enums.ts';
 	import type { PageProps } from './$types';
@@ -13,9 +15,12 @@
 <a class="btn-primary mb-5 w-full" href={resolve('/equipment/scan')}>Add from photo</a>
 
 {#if data.equipment.length === 0}
-	<p class="empty">No equipment yet. Add crocks, jars, airlocks, and meters you use.</p>
+	<EmptyState icon={IconTools} title="No equipment yet">
+		Take a photo of a shelf and the crocks, jars, lights, and meters on it get listed for you to
+		check.
+	</EmptyState>
 {:else}
-	<ul class="card divide-y divide-gray-200">
+	<ul class="card divide-y divide-line">
 		{#each data.equipment as e (e.id)}
 			<li>
 				<a
@@ -33,10 +38,10 @@
 					<span class="min-w-0 flex-1">
 						<span class="flex items-center justify-between gap-2">
 							<span class="font-medium">{e.name}</span>
-							<span class="text-sm text-gray-500">{label(e.kind)}</span>
+							<span class="text-sm text-ink-muted">{label(e.kind)}</span>
 						</span>
 						{#if e.model || e.spaceName}
-							<span class="block text-sm text-gray-500">
+							<span class="block text-sm text-ink-muted">
 								{[e.model, e.spaceName].filter(Boolean).join(' · ')}
 							</span>
 						{/if}

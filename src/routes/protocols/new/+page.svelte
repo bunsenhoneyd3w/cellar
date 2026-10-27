@@ -20,7 +20,7 @@
 			href="{resolve('/protocols/new')}?type={t}"
 			aria-current={data.batchType === t ? 'page' : undefined}
 			class="btn {data.batchType === t
-				? 'border-gray-800 bg-gray-800 text-white active:bg-gray-700'
+				? 'border-accent bg-accent text-on-accent active:bg-accent-strong'
 				: ''}">{label(t)}</a
 		>
 	{/each}

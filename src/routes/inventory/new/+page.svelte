@@ -6,7 +6,7 @@
 </script>
 
 <h1 class="text-2xl font-bold">Add to shelf</h1>
-<p class="mb-5 text-gray-600">{data.batch ? `From ${data.batch.name}` : 'Not made here'}</p>
+<p class="mb-5 text-ink-muted">{data.batch ? `From ${data.batch.name}` : 'Not made here'}</p>
 
 <InventoryForm
 	values={data.values}

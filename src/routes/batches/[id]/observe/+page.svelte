@@ -11,6 +11,8 @@
 		label
 	} from '#lib/enums.ts';
 	import PhaseButtons from '#lib/components/PhaseButtons.svelte';
+	import { onMount } from 'svelte';
+	import { clearDraft, readDraft, writeDraft } from '#lib/draft.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -19,6 +21,7 @@
 	// readings, camera first, and Save always within reach at the bottom.
 
 	let values = $state<Record<string, string>>({});
+	let note = $state('');
 	let photos = $state<{ file: File; url: string }[]>([]);
 	let saving = $state(false);
 	let observedAt = $state('');
@@ -64,31 +67,79 @@
 		photos.splice(i, 1);
 	}
 
+	// Typing is kept on the phone until the save goes through (D52).
+	let draftReady = $state(false);
+	let restored = $state(false);
+	let unreachable = $state(false);
+	onMount(() => {
+		const d = readDraft(localStorage, data.batch.id);
+		if (d) {
+			values = d.values;
+			note = d.note;
+			restored = true;
+		}
+		draftReady = true;
+	});
+	$effect(() => {
+		const draft = { note, values: $state.snapshot(values) };
+		if (draftReady) writeDraft(localStorage, data.batch.id, draft);
+	});
+	function forgetDraft() {
+		clearDraft(localStorage, data.batch.id);
+		values = {};
+		note = '';
+		restored = false;
+	}
+
 	const submit: SubmitFunction = ({ formData }) => {
 		saving = true;
 		formData.delete('photos');
 		for (const p of photos) formData.append('photos', p.file);
-		return async ({ update }) => {
+		return async ({ result, update }) => {
+			// The request never reached the server (Wi-Fi dropped, computer asleep):
+			// stay on the form with everything still filled in.
+			if (result.type === 'error') {
+				unreachable = true;
+				saving = false;
+				return;
+			}
+			unreachable = false;
+			if (result.type === 'redirect') {
+				draftReady = false;
+				clearDraft(localStorage, data.batch.id);
+			}
 			await update({ reset: false });
 			saving = false;
 		};
 	};
 </script>
 
-<p class="text-sm text-gray-500">
+<p class="text-sm text-ink-muted">
 	Day {data.batch.startedAt ? dayNumber(data.batch.startedAt) : 0}
 </p>
 <h1 class="mb-4 text-xl font-bold">{data.batch.name}</h1>
 
 {#if form?.error}<p class="error">{form.error}</p>{/if}
+{#if unreachable}
+	<p class="error" role="alert">
+		Couldn't save: Cellar didn't answer. Check the Wi-Fi, then tap Save again. Everything you typed
+		and the photos are still here.
+	</p>
+{/if}
+{#if restored}
+	<p class="notice mb-4 flex items-center justify-between gap-3">
+		<span>Brought back what you typed last time. Photos need adding again.</span>
+		<button type="button" class="shrink-0 underline" onclick={forgetDraft}>Clear</button>
+	</p>
+{/if}
 
 {#snippet choices(name: string, values: readonly string[], cols: string, legend: string)}
 	<fieldset>
-		<legend class="mb-1 text-sm text-gray-600">{legend}</legend>
+		<legend class="mb-1 text-sm text-ink-muted">{legend}</legend>
 		<div class="grid {cols} gap-2">
 			{#each values as v (v)}
 				<label
-					class="btn min-h-12 cursor-pointer px-2 text-sm has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
+					class="btn min-h-12 cursor-pointer px-2 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent"
 				>
 					<input class="sr-only" type="radio" {name} value={v} />
 					{CONTAMINATION_LABELS[v] ?? v}
@@ -102,20 +153,20 @@
 	{#if data.dueTasks.length}
 		<section>
 			<h2 class="section-title">Tasks due</h2>
-			<div class="card divide-y divide-gray-100">
+			<div class="card divide-y divide-line">
 				{#each data.dueTasks as t (t.id)}
 					<label class="flex min-h-14 cursor-pointer items-center gap-4 px-4 py-2">
 						<input type="checkbox" name="taskId" value={t.id} class="size-7 rounded" />
 						<span class="flex-1">
 							<span class="block">{t.title}</span>
-							<span class="block text-xs text-gray-500">
+							<span class="block text-xs text-ink-muted">
 								{formatDueDate(t.dueAt)}{t.recurrence ? ` · ${formatRecurrence(t.recurrence)}` : ''}
 							</span>
 						</span>
 					</label>
 				{/each}
 			</div>
-			<p class="mt-1 text-sm text-gray-500">Tick what you did. Ticking alone is enough to save.</p>
+			<p class="mt-1 text-sm text-ink-muted">Tick what you did. Ticking alone is enough to save.</p>
 		</section>
 	{/if}
 
@@ -177,7 +228,7 @@
 		<section>
 			<h2 class="section-title">Harvest</h2>
 			{#if harvestOpen}
-				<div class="card divide-y divide-gray-100">
+				<div class="card divide-y divide-line">
 					<label class="flex min-h-14 items-center gap-3 px-4 py-2">
 						<span class="flex-1">{data.harvest.label}</span>
 						<input
@@ -188,12 +239,12 @@
 							min="0"
 							inputmode="decimal"
 						/>
-						<span class="w-10 text-sm text-gray-500">{data.harvest.unit}</span>
+						<span class="w-10 text-sm text-ink-muted">{data.harvest.unit}</span>
 					</label>
 					<div class="flex min-h-14 items-center gap-3 px-4 py-2">
 						<span class="flex-1">
 							<span class="block">{label(word)}</span>
-							<span class="block text-xs text-gray-500">
+							<span class="block text-xs text-ink-muted">
 								{#if data.lastFlush}
 									Last harvest: {word}
 									{data.lastFlush.flush}, {formatDueDate(localDate(data.lastFlush.harvestedAt))}
@@ -221,7 +272,7 @@
 						<input type="hidden" name="flush" value={flush} />
 					</div>
 				</div>
-				<p class="mt-1 text-sm text-gray-500">
+				<p class="mt-1 text-sm text-ink-muted">
 					{flush === maxFlush && data.lastFlush
 						? `A new ${word}. Tap − if this finishes the last one.`
 						: 'Weigh the whole harvest, in grams.'}
@@ -236,13 +287,13 @@
 
 	<section>
 		<h2 class="section-title">Readings</h2>
-		<div class="card divide-y divide-gray-100">
+		<div class="card divide-y divide-line">
 			{#each data.kinds as k (k.kind)}
 				{@const t = target(k.kind)}
 				<label class="flex min-h-14 items-center gap-3 px-4 py-2">
 					<span class="flex-1">
 						<span class="block">{k.label}</span>
-						<span class="block text-xs text-gray-500">
+						<span class="block text-xs text-ink-muted">
 							{#if t}Target {formatRange(t)}{/if}
 							{#if t && data.last[k.kind] !== undefined}
 								·
@@ -252,7 +303,7 @@
 					</span>
 					<input
 						class="input w-28 text-right text-lg {outOfRange(k.kind)
-							? 'border-amber-500 bg-amber-50'
+							? 'border-warn bg-warn-bg'
 							: ''}"
 						name="r_{k.kind}"
 						type="number"
@@ -261,7 +312,7 @@
 						enterkeyhint="next"
 						bind:value={values[k.kind]}
 					/>
-					<span class="w-10 text-sm text-gray-500">{k.unit}</span>
+					<span class="w-10 text-sm text-ink-muted">{k.unit}</span>
 				</label>
 			{/each}
 		</div>
@@ -298,7 +349,7 @@
 				>{contamKeys.length ? 'Add another' : 'Log contamination'}</button
 			>
 			{#if contamKeys.length}
-				<p class="mt-1 text-sm text-gray-500">
+				<p class="mt-1 text-sm text-ink-muted">
 					Add a close-up photo above; it stays with this check-in.
 				</p>
 			{/if}
@@ -312,6 +363,7 @@
 			id="note"
 			name="note"
 			rows="3"
+			bind:value={note}
 			placeholder={data.contamination
 				? 'Colonization, pins, smell, color, anything off'
 				: (NOTE_HINTS[data.batch.batchType] ?? 'Smell, color, bubbles, film, anything off')}
@@ -330,12 +382,12 @@
 
 	<!-- Left empty, the server stamps the moment Save is pressed. -->
 	<details ontoggle={(e) => (observedAt ||= e.currentTarget.open ? toLocalInput(null) : '')}>
-		<summary class="cursor-pointer py-2 text-gray-600">Logged at save time. Change it</summary>
+		<summary class="cursor-pointer py-2 text-ink-muted">Logged at save time. Change it</summary>
 		<input class="input mt-2" name="observedAt" type="datetime-local" bind:value={observedAt} />
 	</details>
 
 	<div
-		class="sticky z-10 -mx-4 bg-gray-50/95 px-4 py-3"
+		class="sticky z-10 -mx-4 bg-paper/95 px-4 py-3"
 		style="bottom: calc(3.5rem + env(safe-area-inset-bottom))"
 	>
 		<button class="btn-primary min-h-14 w-full text-lg" disabled={saving}>

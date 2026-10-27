@@ -45,7 +45,7 @@
 				>
 			</div>
 			<div class="grid grid-cols-2 gap-2">
-				<label class="text-sm text-gray-600">
+				<label class="text-sm text-ink-muted">
 					How many
 					<input
 						class="input mt-1"
@@ -56,18 +56,18 @@
 						inputmode="decimal"
 					/>
 				</label>
-				<label class="text-sm text-gray-600">
+				<label class="text-sm text-ink-muted">
 					Unit
 					<input class="input mt-1" name="shelf_{i}_unit" bind:value={row.unit} />
 				</label>
-				<label class="text-sm text-gray-600">
+				<label class="text-sm text-ink-muted">
 					Shelf
 					<select class="input mt-1" name="shelf_{i}_spaceId" bind:value={row.spaceId}>
 						<option value="">Not set</option>
 						{#each spaces as s (s.id)}<option value={s.id}>{s.path}</option>{/each}
 					</select>
 				</label>
-				<label class="text-sm text-gray-600">
+				<label class="text-sm text-ink-muted">
 					Use by
 					<input class="input mt-1" name="shelf_{i}_useBy" type="date" bind:value={row.useBy} />
 				</label>

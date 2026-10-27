@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { getDb } from '#lib/server/db/index.ts';
-import { saveScannedEquipment } from '#lib/server/equipment.ts';
+import { discardScanPhoto, saveScannedEquipment } from '#lib/server/equipment.ts';
 import { listSpaces } from '#lib/server/spaces.ts';
 import { savePhoto } from '#lib/server/photos.ts';
 import { photosDir } from '#lib/server/paths.ts';
@@ -57,6 +57,12 @@ export const actions: Actions = {
 			if (e instanceof InputError) return fail(400, { review, notice: null, error: e.message });
 			throw e;
 		}
+		redirect(303, '/equipment');
+	},
+
+	// Leaving the review without saving: delete the photo it took, if nothing uses it.
+	discard: async ({ request }) => {
+		discardScanPhoto(getDb(), readScanForm(await request.formData()).photo);
 		redirect(303, '/equipment');
 	}
 };

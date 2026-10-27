@@ -8,7 +8,7 @@
 
 <h1 class="mb-5 text-2xl font-bold">Edit task</h1>
 {#if data.task.doneAt}
-	<p class="mb-4 rounded-lg bg-gray-100 px-4 py-3 text-gray-700">
+	<p class="mb-4 rounded-lg bg-sunken px-4 py-3 text-ink">
 		Done {formatDateTime(data.task.doneAt)}
 	</p>
 {/if}
@@ -29,6 +29,6 @@
 	}}
 >
 	<input type="hidden" name="from" value={data.from} />
-	<button class="w-full py-2 text-sm text-gray-500 underline">Delete task</button>
+	<button class="w-full py-2 text-sm text-ink-muted underline">Delete task</button>
 </form>
-<p class="mt-4 text-xs text-gray-400">{data.task.id}</p>
+<p class="mt-4 text-xs text-ink-faint">{data.task.id}</p>

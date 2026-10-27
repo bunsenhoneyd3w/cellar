@@ -91,7 +91,7 @@
 			<select class="input" id="status" name="status" value={values.status ?? 'in_stock'}>
 				{#each INVENTORY_STATUSES as s (s)}<option value={s}>{label(s)}</option>{/each}
 			</select>
-			<p class="mt-1 text-sm text-gray-500">With a count, status follows it: low at 2 or fewer.</p>
+			<p class="mt-1 text-sm text-ink-muted">With a count, status follows it: low at 2 or fewer.</p>
 		</div>
 	{/if}
 
@@ -128,7 +128,7 @@
 		</div>
 	</div>
 	{#if shelfLifeMonths}
-		<p class="-mt-2 text-sm text-gray-500">
+		<p class="-mt-2 text-sm text-ink-muted">
 			Use-by is {shelfLifeMonths} months after packing, from the protocol. Change it if you like.
 		</p>
 	{/if}

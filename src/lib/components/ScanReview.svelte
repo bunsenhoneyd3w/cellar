@@ -59,16 +59,16 @@
 		<img
 			src="{resolve('/')}photos/{review.photo.path}"
 			alt="Your shelf or item"
-			class="max-h-64 w-full rounded-lg bg-gray-100 object-contain"
+			class="max-h-64 w-full rounded-lg bg-sunken object-contain"
 		/>
 	</a>
 	<!-- eslint-enable svelte/no-navigation-without-resolve -->
 
 	{#if error}<p class="error">{error}</p>{/if}
 	{#if notice}
-		<p class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">{notice}</p>
+		<p class="rounded-lg border border-warn-line bg-warn-bg px-4 py-3 text-warn-ink">{notice}</p>
 	{:else}
-		<p class="text-sm text-gray-600">
+		<p class="text-sm text-ink-muted">
 			Found {items.length}
 			{items.length === 1 ? 'item' : 'items'}. Untick anything you don't want and check the sizes.
 		</p>
@@ -88,7 +88,7 @@
 				<input type="checkbox" name="{i}_keep" bind:checked={it.keep} class="size-7 rounded" />
 				<span class="min-w-0 flex-1">
 					<span class="block font-medium">{it.name || `Item ${i + 1}`}</span>
-					{#if it.where}<span class="block text-xs text-gray-500">{it.where}</span>{/if}
+					{#if it.where}<span class="block text-xs text-ink-muted">{it.where}</span>{/if}
 				</span>
 			</label>
 
@@ -140,8 +140,8 @@
 							{@const source = sizeSource(s)}
 							<div
 								class="rounded-lg border px-2 py-2 {source === 'estimate' && !s.confirmed
-									? 'border-amber-300 bg-amber-50'
-									: 'border-gray-200'}"
+									? 'border-warn-line bg-warn-bg'
+									: 'border-line'}"
 							>
 								<div class="grid grid-cols-[1fr_5.5rem_4.5rem] gap-2">
 									<select
@@ -175,7 +175,7 @@
 								<input type="hidden" name="{p}original" value={s.original ?? ''} />
 								<div class="mt-1 flex min-h-8 items-center justify-between gap-2 text-xs">
 									<span
-										class={source === 'estimate' ? 'font-semibold text-amber-800' : 'text-gray-500'}
+										class={source === 'estimate' ? 'font-semibold text-warn-ink' : 'text-ink-muted'}
 									>
 										{SIZE_SOURCE_LABELS[source]}
 									</span>
@@ -200,7 +200,7 @@
 						onclick={() => addSize(it.sizes)}>Add a size</button
 					>
 					{#if it.sizes.length}
-						<p class="mt-1 text-xs text-gray-500">Clear a value to leave that size out.</p>
+						<p class="mt-1 text-xs text-ink-muted">Clear a value to leave that size out.</p>
 					{/if}
 				</fieldset>
 			</div>
@@ -211,8 +211,17 @@
 		>Add an item it missed</button
 	>
 
+	<button
+		class="w-full py-2 text-center text-ink-muted underline"
+		formaction="?/discard"
+		formnovalidate
+		onclick={(e) => {
+			if (!confirm('Throw away this photo and the list?')) e.preventDefault();
+		}}>Discard this photo</button
+	>
+
 	<div
-		class="sticky z-10 -mx-4 bg-gray-50/95 px-4 py-3"
+		class="sticky z-10 -mx-4 bg-paper/95 px-4 py-3"
 		style="bottom: calc(3.5rem + env(safe-area-inset-bottom))"
 	>
 		<button class="btn-primary min-h-14 w-full text-lg" disabled={saving || kept === 0}>

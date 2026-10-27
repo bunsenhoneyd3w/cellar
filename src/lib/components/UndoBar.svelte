@@ -30,7 +30,7 @@
 		role="status"
 	>
 		<div
-			class="mx-auto flex max-w-xl items-center gap-3 rounded-lg bg-gray-900 py-1 pr-1 pl-4 text-white shadow-lg"
+			class="mx-auto flex max-w-xl items-center gap-3 rounded-lg bg-ink py-1 pr-1 pl-4 text-paper shadow-lg"
 		>
 			<span class="min-w-0 flex-1 truncate">{shown.text}</span>
 			<form

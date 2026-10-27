@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { testDb } from './db/test-helpers';
 import { createProtocol, reviseProtocol } from './protocols';
-import { createSpace } from './spaces';
+import { createSpace, listSpaces, spaceAndInside } from './spaces';
+import { createObservation } from './observations';
+import { newId } from './db/ids';
 import { createEquipment } from './equipment';
 import {
 	batchName,
@@ -109,6 +111,39 @@ describe('batches', () => {
 			observationCount: 0,
 			lastObservedAt: null
 		});
+	});
+
+	it('lists the latest photo and filters by space, including spaces inside it', () => {
+		const { db, p } = setup();
+		const lab = createSpace(db, { name: 'Basement lab', kind: 'room' });
+		const shelf = createSpace(db, { name: 'Shelf B', kind: 'shelf', parentSpaceId: lab.id });
+		const freezer = createSpace(db, { name: 'Chest freezer', kind: 'appliance' });
+		const kraut = createBatch(db, { name: 'Kraut', protocolId: p.id, spaceId: shelf.id });
+		const kimchi = createBatch(db, { name: 'Kimchi', protocolId: p.id, spaceId: freezer.id });
+		const photo = (path: string) => ({
+			id: newId('pho'),
+			path,
+			originalPath: `originals/${path}`
+		});
+		createObservation(db, {
+			batchId: kraut.id,
+			observedAt: '2026-10-20T09:00:00-05:00',
+			photos: [photo('2026/10/old.jpg')]
+		});
+		createObservation(db, {
+			batchId: kraut.id,
+			observedAt: '2026-10-25T09:00:00-05:00',
+			photos: [photo('2026/10/new.jpg')]
+		});
+		createObservation(db, { batchId: kraut.id, note: 'No photo this time' });
+
+		const byName = Object.fromEntries(listBatches(db).map((b) => [b.name, b.latestPhotoPath]));
+		expect(byName).toEqual({ Kraut: '2026/10/new.jpg', Kimchi: null });
+
+		const inLab = spaceAndInside(listSpaces(db), lab.id);
+		expect(inLab.sort()).toEqual([lab.id, shelf.id].sort());
+		expect(listBatches(db, { spaceIds: inLab }).map((b) => b.id)).toEqual([kraut.id]);
+		expect(listBatches(db, { spaceIds: [freezer.id] }).map((b) => b.id)).toEqual([kimchi.id]);
 	});
 
 	it('refuses a batch without a protocol or a name', () => {

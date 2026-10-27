@@ -30,7 +30,7 @@
 	<div class="grid grid-cols-2 gap-2">
 		{#each PRESERVE_METHODS as m (m)}
 			<label
-				class="btn cursor-pointer has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
+				class="btn cursor-pointer has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent"
 			>
 				<input class="sr-only" type="radio" name="method" value={m} bind:group={method} />
 				{PRESERVE_METHOD_LABELS[m]}
@@ -53,14 +53,14 @@
 			placeholder="0.5"
 			value={processing?.headspaceIn ?? ''}
 		/>
-		<p class="mt-1 text-sm text-gray-500">0.25 is 1/4 inch, 0.5 is 1/2 inch, 1 is 1 inch.</p>
+		<p class="mt-1 text-sm text-ink-muted">0.25 is 1/4 inch, 0.5 is 1/2 inch, 1 is 1 inch.</p>
 	</div>
 {/if}
 
 <fieldset>
 	<legend class="label">{timed ? 'Time per jar size' : 'Jar or bag sizes'}</legend>
 	{#if timed}
-		<p class="mb-2 text-sm text-gray-500">
+		<p class="mb-2 text-sm text-ink-muted">
 			Enter times{pressure ? ' and psi' : ''} for your altitude (Stevens Point is about 1,100 ft). Cellar
 			does not adjust them.
 		</p>
@@ -138,5 +138,5 @@
 		placeholder="18"
 		value={shelfLifeMonths ?? ''}
 	/>
-	<p class="mt-1 text-sm text-gray-500">Fills in the use-by date on jars from this recipe.</p>
+	<p class="mt-1 text-sm text-ink-muted">Fills in the use-by date on jars from this recipe.</p>
 </div>

@@ -41,7 +41,7 @@
 				{data.recognitionOn ? 'Reading the photo...' : 'Saving the photo...'}
 			</p>
 			{#if data.recognitionOn}
-				<p class="text-sm text-gray-500">This can take up to half a minute.</p>
+				<p class="text-sm text-ink-muted">This can take up to half a minute.</p>
 			{/if}
 		</div>
 	{/if}
@@ -59,7 +59,7 @@
 		}}
 		class="space-y-4 {reading ? 'hidden' : ''}"
 	>
-		<p class="text-sm text-gray-600">
+		<p class="text-sm text-ink-muted">
 			Take one photo of an item or a whole shelf.
 			{data.recognitionOn
 				? 'Claude lists what it sees, and you check it before anything is saved.'

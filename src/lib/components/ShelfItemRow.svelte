@@ -21,27 +21,27 @@
 		<a href={resolve('/inventory/[id]', { id: item.id })} class="block py-1 font-medium"
 			>{item.name}</a
 		>
-		<p class="text-sm text-gray-600">
+		<p class="text-sm text-ink-muted">
 			{#if item.quantity !== null}
-				<span class="font-semibold text-gray-900">{formatCount(item.quantity, item.unit)}</span>
+				<span class="font-semibold text-ink">{formatCount(item.quantity, item.unit)}</span>
 			{/if}
 			{#if item.status === 'low'}
-				<span class="rounded-full bg-amber-100 px-2 text-amber-900">Low</span>
+				<span class="rounded-full bg-warn-bg px-2 text-warn-ink">Low</span>
 			{:else if gone}
-				<span class="rounded-full bg-gray-200 px-2">Gone</span>
+				<span class="rounded-full bg-sunken px-2">Gone</span>
 			{/if}
 			{#if where}
-				<span class="text-gray-500">· {item.spacePath ?? 'No shelf'}</span>
+				<span class="text-ink-muted">· {item.spacePath ?? 'No shelf'}</span>
 			{/if}
 		</p>
 		{#if item.useBy}
-			<p class="text-sm {useBy === 'past' ? 'font-medium text-red-700' : 'text-gray-500'}">
+			<p class="text-sm {useBy === 'past' ? 'font-medium text-danger-ink' : 'text-ink-muted'}">
 				{#if useBy === 'past'}
 					Past use-by, {formatDay(item.useBy)}
 				{:else}
 					Use by {formatDay(item.useBy)}
 					{#if useBy === 'soon'}
-						<span class="rounded-full bg-amber-100 px-2 font-medium text-amber-900">Soon</span>
+						<span class="rounded-full bg-warn-bg px-2 font-medium text-warn-ink">Soon</span>
 					{/if}
 				{/if}
 			</p>
@@ -61,7 +61,7 @@
 		>
 			<input type="hidden" name="itemId" value={item.id} />
 			<button
-				class="min-h-14 min-w-24 rounded-full border-2 border-gray-800 px-3 text-base font-semibold text-gray-900 active:bg-gray-800 active:text-white disabled:opacity-50"
+				class="min-h-14 min-w-24 rounded-full border-2 border-accent px-3 text-base font-semibold text-ink active:bg-accent active:text-on-accent disabled:opacity-50"
 				disabled={pending}
 				aria-label="Used one {item.name}"
 			>

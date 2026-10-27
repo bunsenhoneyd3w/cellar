@@ -14,10 +14,10 @@ export const MAX_COMPARE = 4;
  * can be told apart without color, on paper, or in bright basement light.
  */
 export const SERIES_STYLES = [
-	{ color: '#2a78d6', dash: '' },
-	{ color: '#eb6834', dash: '7 4' },
-	{ color: '#1baf7a', dash: '2 4' },
-	{ color: '#eda100', dash: '10 4 2 4' }
+	{ color: 'var(--color-series-1)', dash: '' },
+	{ color: 'var(--color-series-2)', dash: '7 4' },
+	{ color: 'var(--color-series-3)', dash: '2 4' },
+	{ color: 'var(--color-series-4)', dash: '10 4 2 4' }
 ] as const;
 
 /** Days from `startIso` to `atIso` with the fraction kept, so two readings on one day do not overlap. */
