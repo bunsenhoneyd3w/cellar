@@ -26,3 +26,6 @@ vite.config.ts.timestamp-*
 # they are never committed)
 /data/
 /photos/
+
+# Throwaway data for trying the app without touching the real database
+/.scratch/
