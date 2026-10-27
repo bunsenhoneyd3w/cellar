@@ -8,6 +8,7 @@ import { migrateToLatest, migrationCount, migrationsUpTo, testDb } from './test-
 import { itemsForBatch, listInventory, useOne } from '../inventory';
 import { getBatchDetail } from '../batches';
 import { listOpenTasks } from '../tasks';
+import { compareBatches, compareCandidates, familyBatches } from '../compare';
 
 describe('ids', () => {
 	it('are a prefix plus 10 readable characters', () => {
@@ -206,6 +207,80 @@ describe('migration safety', () => {
 		expect(getBatchDetail(db, 'bat_dddddddddd')?.batch.phase).toBe('fruiting');
 		expect(listOpenTasks(db, { batchId: 'bat_dddddddddd' }).map((x) => x.phase)).toEqual([
 			'fruiting'
+		]);
+	});
+
+	// Phase 5 adds no migration either: towers and seedlings are new batch
+	// types and reading kinds in existing columns. Old ferments, grows with
+	// flushes, and preserves with shelf items, written on older schemas with
+	// snapshots that have no task list or processing, must still open in the
+	// comparison.
+	it('keeps old ferments, grows, and preserves comparable', () => {
+		const db = openDb(':memory:', migrationsUpTo(1));
+		const t = '2026-10-01T09:00:00-05:00';
+		const later = '2026-10-11T09:00:00-05:00';
+		const body =
+			'{"ingredients":[],"steps":[],"targets":[{"kind":"ph","min":null,"max":4.6,"unit":"pH"}],"expectedDays":21}';
+		const snap = (id: string, name: string) =>
+			`{"protocolId":"pro_${id}","familyId":"prf_${id}","name":"${name}","version":1,"source":null,"notes":null,"body":${body},"snapshotAt":"${t}"}`;
+		db.$client.exec(`
+			insert into protocol (id, family_id, name, batch_type, version, body_json, created_at, updated_at)
+				values ('pro_eeeeeeeeee', 'prf_eeeeeeeeee', 'Kraut', 'ferment', 1, '${body}', '${t}', '${t}');
+			insert into batch (id, name, batch_type, protocol_id, protocol_snapshot_json, started_at, status, phase, created_at, updated_at)
+				values ('bat_eeeeeeeee1', 'Ferment 001 Kraut', 'ferment', 'pro_eeeeeeeeee', '${snap('eeeeeeeeee', 'Kraut')}', '${t}', 'active', 'primary ferment', '${t}', '${t}'),
+				       ('bat_eeeeeeeee2', 'Ferment 002 Kraut', 'ferment', 'pro_eeeeeeeeee', '${snap('eeeeeeeeee', 'Kraut')}', '${t}', 'active', 'primary ferment', '${t}', '${t}');
+			insert into observation (id, batch_id, observed_at, phase, note, created_at, updated_at)
+				values ('obs_eeeeeeeee1', 'bat_eeeeeeeee1', '${later}', 'primary ferment', 'Sour', '${t}', '${t}');
+			insert into reading (id, observation_id, kind, value, unit, taken_at, created_at, updated_at)
+				values ('rdg_eeeeeeeee1', 'obs_eeeeeeeee1', 'ph', 3.6, 'pH', '${later}', '${t}', '${t}');
+			insert into protocol (id, family_id, name, batch_type, version, body_json, created_at, updated_at)
+				values ('pro_gggggggggg', 'prf_gggggggggg', 'Dilly beans', 'preserve', 1, '${body}', '${t}', '${t}');
+			insert into batch (id, name, batch_type, protocol_id, protocol_snapshot_json, started_at, ended_at, status, created_at, updated_at)
+				values ('bat_ggggggggg1', 'Preserve 001 Dilly beans', 'preserve', 'pro_gggggggggg', '${snap('gggggggggg', 'Dilly beans')}', '${t}', '${later}', 'done', '${t}', '${t}'),
+				       ('bat_ggggggggg2', 'Preserve 002 Dilly beans', 'preserve', 'pro_gggggggggg', '${snap('gggggggggg', 'Dilly beans')}', '${t}', '${later}', 'done', '${t}', '${t}');
+			insert into outcome (id, batch_id, yield_value, yield_unit, rating, created_at, updated_at)
+				values ('out_ggggggggg1', 'bat_ggggggggg1', 7, 'pints', 5, '${t}', '${t}');
+			insert into inventory_item (id, batch_id, name, quantity, unit, status, created_at, updated_at)
+				values ('inv_ggggggggg1', 'bat_ggggggggg1', 'Dilly beans, pint', 7, 'jars', 'in_stock', '${t}', '${t}');
+		`);
+
+		migrate(db, { migrationsFolder: migrationsUpTo(4) });
+		db.$client.exec(`
+			insert into protocol (id, family_id, name, batch_type, version, body_json, created_at, updated_at)
+				values ('pro_ffffffffff', 'prf_ffffffffff', 'Blue Oyster', 'mushroom', 1, '${body}', '${t}', '${t}');
+			insert into batch (id, name, batch_type, protocol_id, protocol_snapshot_json, started_at, status, phase, created_at, updated_at)
+				values ('bat_fffffffff1', 'Grow 001 Blue Oyster', 'mushroom', 'pro_ffffffffff', '${snap('ffffffffff', 'Blue Oyster')}', '${t}', 'active', 'fruiting', '${t}', '${t}'),
+				       ('bat_fffffffff2', 'Grow 002 Blue Oyster', 'mushroom', 'pro_ffffffffff', '${snap('ffffffffff', 'Blue Oyster')}', '${t}', 'active', 'spawn', '${t}', '${t}');
+			insert into observation (id, batch_id, observed_at, phase, flush, created_at, updated_at)
+				values ('obs_fffffffff1', 'bat_fffffffff1', '${later}', 'fruiting', 1, '${t}', '${t}');
+			insert into reading (id, observation_id, kind, value, unit, taken_at, created_at, updated_at)
+				values ('rdg_fffffffff1', 'obs_fffffffff1', 'harvest_weight', 250, 'g', '${later}', '${t}', '${t}');
+		`);
+
+		migrateToLatest(db);
+
+		const kraut = compareBatches(db, ['bat_eeeeeeeee1', 'bat_eeeeeeeee2']);
+		expect(kraut.batches[0].readings).toEqual([
+			expect.objectContaining({ kind: 'ph', value: 3.6, dayNumber: 10 })
+		]);
+		expect(kraut.targets.ph).toMatchObject({ max: 4.6 });
+		expect(kraut.phaseRows).toEqual(['primary ferment']);
+
+		const grows = compareBatches(db, ['bat_fffffffff1', 'bat_fffffffff2']);
+		expect(grows.batches.map((b) => b.harvests)).toEqual([
+			{ count: 1, grams: 250 },
+			{ count: 0, grams: 0 }
+		]);
+		expect(grows.batches[0].phases).toEqual({ fruiting: 10 });
+
+		const jars = compareBatches(db, ['bat_ggggggggg1', 'bat_ggggggggg2']);
+		expect(jars.batches[0]).toMatchObject({ days: 10, outcome: { yieldValue: 7, rating: 5 } });
+		expect(itemsForBatch(db, 'bat_ggggggggg1')).toHaveLength(1);
+
+		expect(familyBatches(db, 'prf_ffffffffff')).toHaveLength(2);
+		expect(compareCandidates(db, 'preserve', 'prf_gggggggggg').map((b) => b.sameProtocol)).toEqual([
+			true,
+			true
 		]);
 	});
 });

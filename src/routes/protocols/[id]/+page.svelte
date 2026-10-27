@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { formatDate } from '#lib/time.ts';
+	import { dayNumber, formatDate } from '#lib/time.ts';
+	import { MAX_COMPARE } from '#lib/compare.ts';
 	import { label } from '#lib/enums.ts';
 	import { kindLabel } from '#lib/reading-kinds.ts';
 	import ProcessingCard from '#lib/components/ProcessingCard.svelte';
@@ -17,6 +18,13 @@
 	const p = $derived(data.protocol);
 	const body = $derived(p.bodyJson);
 	const words = $derived(bodyWords(p.batchType));
+	// The newest batches of this protocol, any version, side by side (D40).
+	const compareHref = $derived(
+		`${resolve('/compare')}?${data.batches
+			.slice(0, MAX_COMPARE)
+			.map((b) => `b=${b.id}`)
+			.join('&')}`
+	);
 </script>
 
 <h1 class="text-2xl font-bold">{p.name}</h1>
@@ -117,6 +125,40 @@
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 			<a class="mt-2 block break-all text-gray-700 underline" href={body.sourceUrl} rel="external"
 				>{body.sourceUrl}</a
+			>
+		{/if}
+	</section>
+{/if}
+
+{#if data.batches.length}
+	<section class="mb-6">
+		<h2 class="section-title">Batches</h2>
+		<ul class="card mb-2 divide-y divide-gray-100">
+			{#each data.batches as b (b.id)}
+				<li>
+					<a
+						href={resolve('/batches/[id]', { id: b.id })}
+						class="flex justify-between gap-3 px-4 py-2"
+					>
+						<span>{b.name}</span>
+						<span class="shrink-0 text-right text-gray-500">
+							{#if b.status === 'active' && b.startedAt}
+								Day {dayNumber(b.startedAt)}
+							{:else if b.status === 'planned'}
+								Planned
+							{:else}
+								{b.status === 'done' ? 'Done' : 'Failed'}
+							{/if}
+							{b.protocolSnapshotJson ? ` · v${b.protocolSnapshotJson.version}` : ''}
+						</span>
+					</a>
+				</li>
+			{/each}
+		</ul>
+		{#if data.batches.length > 1}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+			<a class="btn w-full" href={compareHref}
+				>Compare {data.batches.length > MAX_COMPARE ? `newest ${MAX_COMPARE}` : 'these'}</a
 			>
 		{/if}
 	</section>

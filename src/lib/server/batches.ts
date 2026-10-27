@@ -136,7 +136,8 @@ export function getBatch(db: Db, id: string): Batch | undefined {
 	return db.select().from(batch).where(eq(batch.id, id)).get();
 }
 
-export type BatchFilter = { status?: BatchStatus[]; type?: BatchType };
+/** `familyId` keeps batches started from any version of one protocol. */
+export type BatchFilter = { status?: BatchStatus[]; type?: BatchType; familyId?: string };
 
 /** Batches with their space and the time of the latest observation, newest first. */
 export function listBatches(db: Db, filter: BatchFilter = {}) {
@@ -163,7 +164,10 @@ export function listBatches(db: Db, filter: BatchFilter = {}) {
 		.where(
 			and(
 				filter.status?.length ? inArray(batch.status, filter.status) : undefined,
-				filter.type ? eq(batch.batchType, filter.type) : undefined
+				filter.type ? eq(batch.batchType, filter.type) : undefined,
+				filter.familyId
+					? sql`json_extract(${batch.protocolSnapshotJson}, '$.familyId') = ${filter.familyId}`
+					: undefined
 			)
 		)
 		.orderBy(desc(batch.startedAt))

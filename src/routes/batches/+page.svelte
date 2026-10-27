@@ -50,4 +50,7 @@
 			</li>
 		{/each}
 	</ul>
+	<a class="mt-4 block py-2 text-center text-gray-600 underline" href={resolve('/compare')}
+		>Compare batches</a
+	>
 {/if}

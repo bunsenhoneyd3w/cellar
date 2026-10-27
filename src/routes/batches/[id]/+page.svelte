@@ -309,6 +309,11 @@
 	</section>
 {/if}
 
+{#if data.sameType > 1}
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+	<a class="btn mb-6 w-full" href="{resolve('/compare')}?from={b.id}">Compare with other batches</a>
+{/if}
+
 {#if charts.length}
 	<section class="mb-6">
 		<h2 class="section-title">Readings</h2>
