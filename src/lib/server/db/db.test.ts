@@ -3,7 +3,11 @@ import { eq } from 'drizzle-orm';
 import { openDb } from './index';
 import { newId } from './ids';
 import { schema } from './index';
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { migrateToLatest, migrationCount, migrationsUpTo, testDb } from './test-helpers';
+import { itemsForBatch, listInventory, useOne } from '../inventory';
+import { getBatchDetail } from '../batches';
+import { listOpenTasks } from '../tasks';
 
 describe('ids', () => {
 	it('are a prefix plus 10 readable characters', () => {
@@ -144,5 +148,64 @@ describe('migration safety', () => {
 			.where(eq(schema.protocol.id, 'pro_bbbbbbbbbb'))
 			.get();
 		expect(p?.bodyJson.tasks?.[0]).toMatchObject({ title: 'Top up airlock water', endDay: 28 });
+	});
+
+	// Phase 4 adds no migration: preserves live in body_json and inventory_item
+	// has been in the baseline since the start. This test pins that down. A
+	// shelf item and a ferment written on the first schema, and a Phase 3 grow
+	// with a phase task written on the schema as Phase 3 left it, must load
+	// through the Phase 4 shelf functions after every migration.
+	it('keeps old shelf items, ferments, grows, and phase tasks readable', () => {
+		const db = openDb(':memory:', migrationsUpTo(1));
+		const t = '2026-10-26T20:00:00-05:00';
+		db.$client.exec(`
+			insert into space (id, name, kind, created_at, updated_at)
+				values ('spc_cccccccccc', 'Shelf B', 'shelf', '${t}', '${t}');
+			insert into protocol (id, family_id, name, batch_type, version, body_json, created_at, updated_at)
+				values ('pro_cccccccccc', 'prf_cccccccccc', 'Kraut', 'ferment', 1, '{"ingredients":[],"steps":[],"targets":[],"expectedDays":21}', '${t}', '${t}');
+			insert into batch (id, name, batch_type, protocol_id, protocol_snapshot_json, started_at, ended_at, status, created_at, updated_at)
+				values ('bat_cccccccccc', 'Ferment 003 Kraut', 'ferment', 'pro_cccccccccc', '{"protocolId":"pro_cccccccccc","familyId":"prf_cccccccccc","name":"Kraut","version":1,"source":null,"notes":null,"body":{"ingredients":[],"steps":[],"targets":[],"expectedDays":21},"snapshotAt":"${t}"}', '${t}', '${t}', 'done', '${t}', '${t}');
+			insert into inventory_item (id, batch_id, name, quantity, unit, space_id, packed_at, use_by, status, created_at, updated_at)
+				values ('inv_cccccccccc', 'bat_cccccccccc', 'Kraut, quart', 3, 'jars', 'spc_cccccccccc', '2026-10-26', '2027-04-26', 'in_stock', '${t}', '${t}');
+		`);
+
+		migrate(db, { migrationsFolder: migrationsUpTo(4) });
+		const grow = JSON.stringify({
+			ingredients: [],
+			steps: [],
+			targets: [],
+			expectedDays: 40,
+			tasks: [
+				{ title: 'Mist and fan', startDay: 0, recurrence: 'daily', endDay: null, phase: 'fruiting' }
+			]
+		});
+		db.$client.exec(`
+			insert into protocol (id, family_id, name, batch_type, version, body_json, created_at, updated_at)
+				values ('pro_dddddddddd', 'prf_dddddddddd', 'Blue Oyster', 'mushroom', 1, '${grow}', '${t}', '${t}');
+			insert into batch (id, name, batch_type, protocol_id, protocol_snapshot_json, started_at, status, phase, created_at, updated_at)
+				values ('bat_dddddddddd', 'Grow 001 Blue Oyster', 'mushroom', 'pro_dddddddddd', '{"protocolId":"pro_dddddddddd","familyId":"prf_dddddddddd","name":"Blue Oyster","version":1,"source":null,"notes":null,"body":${grow},"snapshotAt":"${t}"}', '${t}', 'active', 'fruiting', '${t}', '${t}');
+			insert into task (id, batch_id, title, due_at, recurrence, phase, created_at, updated_at)
+				values ('tsk_dddddddddd', 'bat_dddddddddd', 'Mist and fan', '2026-10-27', 'daily', 'fruiting', '${t}', '${t}');
+		`);
+
+		migrateToLatest(db);
+
+		expect(listInventory(db)).toEqual([
+			expect.objectContaining({
+				id: 'inv_cccccccccc',
+				spacePath: 'Shelf B',
+				batchName: 'Ferment 003 Kraut',
+				useBy: '2027-04-26'
+			})
+		]);
+		expect(itemsForBatch(db, 'bat_cccccccccc')).toHaveLength(1);
+		expect(useOne(db, 'inv_cccccccccc').item).toMatchObject({ quantity: 2, status: 'low' });
+		expect(getBatchDetail(db, 'bat_cccccccccc')?.batch.protocolSnapshotJson?.body.processing).toBe(
+			undefined
+		);
+		expect(getBatchDetail(db, 'bat_dddddddddd')?.batch.phase).toBe('fruiting');
+		expect(listOpenTasks(db, { batchId: 'bat_dddddddddd' }).map((x) => x.phase)).toEqual([
+			'fruiting'
+		]);
 	});
 });
