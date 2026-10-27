@@ -43,23 +43,46 @@ export const PHASE_SUGGESTIONS: Record<BatchType, string[]> = {
  */
 export const FIXED_PHASES: Partial<Record<BatchType, readonly string[]>> = {
 	mushroom: PHASE_SUGGESTIONS.mushroom,
-	preserve: PHASE_SUGGESTIONS.preserve
+	preserve: PHASE_SUGGESTIONS.preserve,
+	hydroponic: PHASE_SUGGESTIONS.hydroponic,
+	seedling: PHASE_SUGGESTIONS.seedling
 };
 
 export function fixedPhases(type: BatchType): readonly string[] | undefined {
 	return FIXED_PHASES[type];
 }
 
-/** Batch types that can have protocols and batches today. The rest arrive in later phases. */
+/** Batch types that can have protocols and batches. All five since Phase 5. */
 export const STARTABLE_TYPES = [
 	'ferment',
 	'mushroom',
-	'preserve'
+	'preserve',
+	'hydroponic',
+	'seedling'
 ] as const satisfies readonly BatchType[];
 export type StartableType = (typeof STARTABLE_TYPES)[number];
 
 export function isStartableType(value: string | null | undefined): value is StartableType {
 	return (STARTABLE_TYPES as readonly string[]).includes(value ?? '');
+}
+
+/**
+ * Batch types whose check-in has a harvest part with numbered harvests:
+ * mushroom flushes (D23) and tower cuts (D36). The word is what a number is called.
+ */
+export const HARVEST_WORDS: Partial<Record<BatchType, { one: string; many: string }>> = {
+	mushroom: { one: 'flush', many: 'flushes' },
+	hydroponic: { one: 'harvest', many: 'harvests' }
+};
+
+export function hasHarvests(type: BatchType): boolean {
+	return !!HARVEST_WORDS[type];
+}
+
+/** "flush" or "harvest", or the plural when n is not 1. */
+export function harvestWord(type: BatchType, n = 1): string {
+	const w = HARVEST_WORDS[type] ?? { one: 'harvest', many: 'harvests' };
+	return n === 1 ? w.one : w.many;
 }
 
 /** How a preserve is put up (D28). Only pressure canning uses psi. */

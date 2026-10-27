@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { trackedKindsFor } from '#lib/reading-kinds.ts';
+	import { targetKindsFor } from '#lib/reading-kinds.ts';
 	import { fixedPhases, label, type BatchType } from '#lib/enums.ts';
 	import TaskTemplatesField from '#lib/components/TaskTemplatesField.svelte';
 	import ProcessingField from '#lib/components/ProcessingField.svelte';
-	import { bodyProcessing, bodyTasks, type ProtocolBody } from '#lib/protocol-body.ts';
+	import { bodyProcessing, bodyTasks, bodyWords, type ProtocolBody } from '#lib/protocol-body.ts';
 
 	type Values = {
 		name?: string;
@@ -16,9 +16,9 @@
 	let { values = {}, batchType, error, submitLabel }: Props = $props();
 
 	const body = $derived(values.bodyJson);
-	const kinds = $derived(trackedKindsFor(batchType));
+	const kinds = $derived(targetKindsFor(batchType));
 	const phases = $derived(fixedPhases(batchType) ?? []);
-	const grow = $derived(batchType === 'mushroom');
+	const words = $derived(bodyWords(batchType));
 	const preserve = $derived(batchType === 'preserve');
 	// Exact match on phase, so an all-phases target never fills a phase row.
 	const target = (kind: string, phase: string | null) =>
@@ -67,17 +67,17 @@
 	</div>
 
 	<div>
-		<label class="label" for="ingredients">{grow ? 'Materials' : 'Ingredients'}</label>
+		<label class="label" for="ingredients">{words.ingredients}</label>
 		<textarea class="input" id="ingredients" name="ingredients" rows="6"
 			>{body?.ingredients.join('\n') ?? ''}</textarea
 		>
 		<p class="mt-1 text-sm text-gray-500">
-			One per line.{grow ? ' Spawn, substrate, container.' : ''}
+			One per line.{words.ingredientsHint ? ` ${words.ingredientsHint}` : ''}
 		</p>
 	</div>
 
 	<div>
-		<label class="label" for="steps">{grow ? 'Tek steps' : 'Steps'}</label>
+		<label class="label" for="steps">{words.steps}</label>
 		<textarea class="input" id="steps" name="steps" rows="8"
 			>{body?.steps.join('\n') ?? ''}</textarea
 		>
@@ -91,11 +91,9 @@
 		/>
 	{/if}
 
-	<div class="grid {grow ? '' : 'grid-cols-2'} gap-3">
+	<div class="grid {words.servings ? 'grid-cols-2' : ''} gap-3">
 		<div>
-			<label class="label" for="expectedDays"
-				>{grow ? 'Expected days, Day 0 to cleanup' : 'Expected days'}</label
-			>
+			<label class="label" for="expectedDays">{words.expectedDays}</label>
 			<input
 				class="input"
 				id="expectedDays"
@@ -106,7 +104,7 @@
 				value={body?.expectedDays ?? ''}
 			/>
 		</div>
-		{#if !grow}
+		{#if words.servings}
 			<div>
 				<label class="label" for="servings">Makes</label>
 				<input class="input" id="servings" name="servings" value={body?.servings ?? ''} />
@@ -136,11 +134,7 @@
 		{/if}
 	</fieldset>
 
-	<TaskTemplatesField
-		tasks={bodyTasks(body)}
-		{phases}
-		placeholder={grow ? 'Mist and fan' : preserve ? 'Check seals' : 'Top up airlock water'}
-	/>
+	<TaskTemplatesField tasks={bodyTasks(body)} {phases} placeholder={words.taskPlaceholder} />
 
 	<div>
 		<label class="label" for="source">Source</label>

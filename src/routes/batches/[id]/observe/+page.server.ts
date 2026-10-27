@@ -9,7 +9,7 @@ import { deletePhotoFiles, savePhoto, type SavedPhoto } from '#lib/server/photos
 import { num, str } from '#lib/server/form.ts';
 import { inputFail } from '#lib/server/actions.ts';
 import { HARVEST_KIND, kindsFor, readingKind, trackedKindsFor } from '#lib/reading-kinds.ts';
-import { PHASE_SUGGESTIONS, fixedPhases } from '#lib/enums.ts';
+import { PHASE_SUGGESTIONS, fixedPhases, harvestWord, hasHarvests } from '#lib/enums.ts';
 import { fromLocalInput, localDate } from '#lib/time.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -30,6 +30,7 @@ export const load: PageServerLoad = ({ params }) => {
 	for (const r of detail.readings) last[r.kind] = r.value;
 
 	const grow = b.batchType === 'mushroom';
+	const harvests = hasHarvests(b.batchType);
 	return {
 		batch: b,
 		kinds,
@@ -37,9 +38,10 @@ export const load: PageServerLoad = ({ params }) => {
 		targets: b.protocolSnapshotJson?.body.targets ?? [],
 		phases: PHASE_SUGGESTIONS[b.batchType],
 		fixedPhases: fixedPhases(b.batchType),
-		// Grows get the harvest and contamination parts of the check-in (D22, D23).
-		harvest: grow ? readingKind(HARVEST_KIND) : undefined,
-		nextFlush: grow ? nextFlush(getDb(), b.id) : null,
+		// Grows and towers get the harvest part (D23, D36); only grows get contamination (D22).
+		harvest: harvests ? readingKind(HARVEST_KIND) : undefined,
+		harvestWord: harvestWord(b.batchType),
+		nextFlush: harvests ? nextFlush(getDb(), b.id) : null,
 		lastFlush: detail.flushes.flushes.at(-1),
 		contamination: grow,
 		dueTasks: listOpenTasks(getDb(), { batchId: b.id, dueThrough: localDate() })

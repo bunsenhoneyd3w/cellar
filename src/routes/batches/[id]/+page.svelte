@@ -6,9 +6,15 @@
 	import UndoBar from '#lib/components/UndoBar.svelte';
 	import ProcessingCard from '#lib/components/ProcessingCard.svelte';
 	import { dayNumber, formatDate, formatDateTime } from '#lib/time.ts';
-	import { CONTAMINATION_LABELS } from '#lib/enums.ts';
-	import { bodyProcessing, bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
-	import { READING_KINDS, kindLabel } from '#lib/reading-kinds.ts';
+	import { CONTAMINATION_LABELS, harvestWord, label as titleCase } from '#lib/enums.ts';
+	import {
+		bodyProcessing,
+		bodyTasks,
+		bodyWords,
+		formatRange,
+		formatTemplate
+	} from '#lib/protocol-body.ts';
+	import { READING_KINDS, formatGermination, germination, kindLabel } from '#lib/reading-kinds.ts';
 	import { formatCount } from '#lib/shelf.ts';
 	import type { PageProps } from './$types';
 
@@ -44,7 +50,10 @@
 			})
 	);
 	const label = (kind: string) => kindLabel(kind, b.batchType);
-	const grow = $derived(b.batchType === 'mushroom');
+	const words = $derived(bodyWords(b.batchType));
+	// "flush" on a grow, "harvest" on a tower (D36).
+	const cut = (n = 1) => harvestWord(b.batchType, n);
+	const sprouts = $derived(germination(data.readings));
 	const flushes = $derived(data.flushes.flushes);
 	const events = $derived(
 		data.observations
@@ -69,7 +78,10 @@
 	{#if b.phase}
 		· {b.phase}{/if}
 	{#if flushes.length}
-		· {flushes.length} flush{flushes.length === 1 ? '' : 'es'}, {grams(data.flushes.totalGrams)}
+		· {flushes.length} {cut(flushes.length)}, {grams(data.flushes.totalGrams)}
+	{/if}
+	{#if sprouts}
+		· {formatGermination(sprouts)}
 	{/if}
 </p>
 
@@ -149,11 +161,11 @@
 
 {#if flushes.length}
 	<section class="mb-6">
-		<h2 class="section-title">Flushes</h2>
+		<h2 class="section-title">{titleCase(cut(2))}</h2>
 		<table class="card w-full text-sm">
 			<thead class="text-left text-gray-500">
 				<tr>
-					<th class="px-4 py-2 font-normal">Flush</th>
+					<th class="px-4 py-2 font-normal">{titleCase(cut())}</th>
 					<th class="px-2 py-2 font-normal">Picked</th>
 					<th class="px-2 py-2 text-right font-normal">Weight</th>
 					<th class="px-4 py-2 text-right font-normal">Total</th>
@@ -208,13 +220,13 @@
 			<div class="mt-4"><ProcessingCard body={snap.body} /></div>
 		{/if}
 		{#if snap.body.ingredients.length}
-			<h3 class="section-title mt-4">{grow ? 'Materials' : 'Ingredients'}</h3>
+			<h3 class="section-title mt-4">{words.ingredients}</h3>
 			<ul class="list-inside list-disc text-gray-700">
 				{#each snap.body.ingredients as line, i (i)}<li>{line}</li>{/each}
 			</ul>
 		{/if}
 		{#if snap.body.steps.length}
-			<h3 class="section-title mt-4">{grow ? 'Tek steps' : 'Steps'}</h3>
+			<h3 class="section-title mt-4">{words.steps}</h3>
 			<ol class="list-inside list-decimal text-gray-700">
 				{#each snap.body.steps as line, i (i)}<li>{line}</li>{/each}
 			</ol>
@@ -297,6 +309,11 @@
 	</section>
 {/if}
 
+{#if data.sameType > 1}
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+	<a class="btn mb-6 w-full" href="{resolve('/compare')}?from={b.id}">Compare with other batches</a>
+{/if}
+
 {#if charts.length}
 	<section class="mb-6">
 		<h2 class="section-title">Readings</h2>
@@ -334,7 +351,8 @@
 						<ul class="mb-2 flex flex-wrap gap-2">
 							{#if o.flush}
 								<li class="rounded-full bg-green-100 px-3 py-1 text-sm text-green-900">
-									Flush {o.flush}
+									{titleCase(cut())}
+									{o.flush}
 								</li>
 							{/if}
 							{#each o.contaminations as c (c.id)}

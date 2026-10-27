@@ -2,7 +2,7 @@
 // fields, and old protocols without them must still load.
 
 import { formatRecurrence } from './recurrence';
-import type { PreserveMethod } from './enums';
+import type { BatchType, PreserveMethod } from './enums';
 
 export type TargetRange = {
 	kind: string;
@@ -114,6 +114,59 @@ export const SEAL_CHECK_TASK: TaskTemplate = {
 	recurrence: null,
 	endDay: null
 };
+
+/** What each part of a protocol is called on a batch type, so a tek or a tower reads right. */
+export type BodyWords = {
+	ingredients: string;
+	ingredientsHint: string;
+	steps: string;
+	expectedDays: string;
+	/** Recipes say how much they make; grows, towers, and seedlings do not. */
+	servings: boolean;
+	taskPlaceholder: string;
+};
+
+const RECIPE_WORDS: BodyWords = {
+	ingredients: 'Ingredients',
+	ingredientsHint: '',
+	steps: 'Steps',
+	expectedDays: 'Expected days',
+	servings: true,
+	taskPlaceholder: 'Top up airlock water'
+};
+
+const BODY_WORDS: Record<BatchType, BodyWords> = {
+	ferment: RECIPE_WORDS,
+	preserve: { ...RECIPE_WORDS, taskPlaceholder: 'Check seals' },
+	mushroom: {
+		ingredients: 'Materials',
+		ingredientsHint: 'Spawn, substrate, container.',
+		steps: 'Tek steps',
+		expectedDays: 'Expected days, Day 0 to cleanup',
+		servings: false,
+		taskPlaceholder: 'Mist and fan'
+	},
+	hydroponic: {
+		ingredients: 'Nutrients and supplies',
+		ingredientsHint: 'Nutrients, pH up and down, seeds or starts.',
+		steps: 'Steps',
+		expectedDays: 'Expected days, fill to teardown',
+		servings: false,
+		taskPlaceholder: 'Top up the tank'
+	},
+	seedling: {
+		ingredients: 'Seeds and supplies',
+		ingredientsHint: 'Variety, seed starting mix, cells or pots.',
+		steps: 'Steps',
+		expectedDays: 'Expected days, sowing to transplant',
+		servings: false,
+		taskPlaceholder: 'Bottom water'
+	}
+};
+
+export function bodyWords(type: BatchType): BodyWords {
+	return BODY_WORDS[type];
+}
 
 export function emptyBody(): ProtocolBody {
 	return { ingredients: [], steps: [], targets: [], expectedDays: null };

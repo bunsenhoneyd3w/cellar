@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import { getDb } from '#lib/server/db/index.ts';
-import { getBatchDetail } from '#lib/server/batches.ts';
+import { getBatchDetail, listBatches } from '#lib/server/batches.ts';
 import { deleteObservation, getObservation } from '#lib/server/observations.ts';
 import { deletePhotoFiles } from '#lib/server/photos.ts';
 import { reopenBatch } from '#lib/server/outcomes.ts';
@@ -16,7 +16,9 @@ export const load: PageServerLoad = ({ params }) => {
 	return {
 		...detail,
 		tasks: listOpenTasks(getDb(), { batchId: params.id }),
-		shelfItems: itemsForBatch(getDb(), params.id)
+		shelfItems: itemsForBatch(getDb(), params.id),
+		// Compare is offered once there is another batch of the same type (D40).
+		sameType: listBatches(getDb(), { type: detail.batch.batchType }).length
 	};
 };
 
