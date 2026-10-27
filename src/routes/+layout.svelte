@@ -11,6 +11,11 @@
 	const nav = [
 		{ href: resolve('/'), label: 'Today', match: (p: string) => p === '/' },
 		{
+			href: resolve('/batches'),
+			label: 'Batches',
+			match: (p: string) => p.startsWith('/batches')
+		},
+		{
 			href: resolve('/protocols'),
 			label: 'Protocols',
 			match: (p: string) => p.startsWith('/protocols')

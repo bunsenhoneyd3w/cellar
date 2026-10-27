@@ -24,7 +24,10 @@
 	</p>
 {/if}
 
-<div class="mb-6 grid grid-cols-1 gap-3">
+<div class="mb-6 grid grid-cols-2 gap-3">
+	<a class="btn-primary" href="{resolve('/batches/new')}?protocol={data.versions[0].id}"
+		>Start batch</a
+	>
 	<a class="btn" href={resolve('/protocols/[id]/edit', { id: data.versions[0].id })}>Edit</a>
 </div>
 
