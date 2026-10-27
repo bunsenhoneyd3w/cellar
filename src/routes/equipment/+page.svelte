@@ -8,8 +8,9 @@
 
 <div class="mb-5 flex items-center justify-between">
 	<h1 class="text-2xl font-bold">Equipment</h1>
-	<a class="btn-primary" href={resolve('/equipment/new')}>Add equipment</a>
+	<a class="btn" href={resolve('/equipment/new')}>Add by hand</a>
 </div>
+<a class="btn-primary mb-5 w-full" href={resolve('/equipment/scan')}>Add from photo</a>
 
 {#if data.equipment.length === 0}
 	<p class="empty">No equipment yet. Add crocks, jars, airlocks, and meters you use.</p>
