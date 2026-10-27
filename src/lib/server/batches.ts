@@ -16,7 +16,8 @@ import type { ProtocolSnapshot } from '../protocol-body';
 import { nowIso } from '../time';
 import { InputError } from './form';
 import { getProtocol } from './protocols';
-import { createTasksFromTemplates } from './tasks';
+import { applyPhaseChange, createTasksFromTemplates } from './tasks';
+import { contaminationsFor, flushSummary } from './grows';
 
 export { batchName } from '../batch-name';
 
@@ -116,6 +117,7 @@ export function updateBatch(db: Db, id: string, input: BatchEditInput): Batch {
 			.returning()
 			.get();
 		setEquipment(tx, id, input.equipmentIds ?? []);
+		if (row.phase !== current.phase) applyPhaseChange(tx, row, row.phase);
 		return row;
 	});
 }
@@ -174,7 +176,10 @@ export function listBatches(db: Db, filter: BatchFilter = {}) {
 		}));
 }
 
-/** Everything the batch page shows: the batch, where it is, what it uses, its timeline, and its outcome. */
+/**
+ * Everything the batch page shows: the batch, where it is, what it uses, its
+ * timeline (with contamination events), its flushes, and its outcome.
+ */
 export function getBatchDetail(db: Db, id: string) {
 	const b = getBatch(db, id);
 	if (!b) return undefined;
@@ -213,6 +218,7 @@ export function getBatchDetail(db: Db, id: string) {
 				.orderBy(asc(photo.createdAt))
 				.all()
 		: [];
+	const contaminations = contaminationsFor(db, obsIds);
 
 	const latestProtocol = b.protocolSnapshotJson
 		? db
@@ -231,9 +237,11 @@ export function getBatchDetail(db: Db, id: string) {
 		observations: obs.map((o) => ({
 			...o,
 			readings: readings.filter((r) => r.observationId === o.id),
-			photos: photos.filter((p) => p.observationId === o.id)
+			photos: photos.filter((p) => p.observationId === o.id),
+			contaminations: contaminations.filter((c) => c.observationId === o.id)
 		})),
 		readings,
+		flushes: flushSummary(db, id),
 		outcome: db.select().from(outcome).where(eq(outcome.batchId, id)).get(),
 		latestProtocol
 	};

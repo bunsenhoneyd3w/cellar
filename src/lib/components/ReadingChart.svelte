@@ -7,8 +7,15 @@
 	// library; it is a few lines of SVG.
 
 	type Point = { takenAt: string; value: number };
-	type Props = { label: string; unit: string; points: Point[]; target?: TargetRange };
-	let { label, unit, points, target }: Props = $props();
+	/** `note` replaces the band legend, e.g. when the target changes from phase to phase. */
+	type Props = {
+		label: string;
+		unit: string;
+		points: Point[];
+		target?: TargetRange;
+		note?: string;
+	};
+	let { label, unit, points, target, note }: Props = $props();
 
 	const W = 300;
 	const H = 80;
@@ -87,4 +94,5 @@
 		</span>
 		{#if target}<span>Shaded: target range</span>{/if}
 	</p>
+	{#if note}<p class="mt-1 text-xs text-gray-500">{note}</p>{/if}
 </figure>

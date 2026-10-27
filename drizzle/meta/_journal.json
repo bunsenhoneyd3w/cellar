@@ -15,6 +15,20 @@
 			"when": 1793066672924,
 			"tag": "0001_task_repeats",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1793068326299,
+			"tag": "0002_mushroom_check_ins",
+			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "6",
+			"when": 1793068697976,
+			"tag": "0003_phase_tasks",
+			"breakpoints": true
 		}
 	]
 }

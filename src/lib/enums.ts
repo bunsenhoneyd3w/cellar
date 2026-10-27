@@ -37,6 +37,62 @@ export const PHASE_SUGGESTIONS: Record<BatchType, string[]> = {
 	preserve: ['prep', 'processing', 'cooling', 'stored']
 };
 
+/**
+ * Batch types whose phase is picked from a fixed list with buttons (D27).
+ * Only these get phase tasks and phase targets; other types keep free text.
+ */
+export const FIXED_PHASES: Partial<Record<BatchType, readonly string[]>> = {
+	mushroom: PHASE_SUGGESTIONS.mushroom
+};
+
+export function fixedPhases(type: BatchType): readonly string[] | undefined {
+	return FIXED_PHASES[type];
+}
+
+/** Batch types that can have protocols and batches today. The rest arrive in later phases. */
+export const STARTABLE_TYPES = ['ferment', 'mushroom'] as const satisfies readonly BatchType[];
+export type StartableType = (typeof STARTABLE_TYPES)[number];
+
+export function isStartableType(value: string | null | undefined): value is StartableType {
+	return (STARTABLE_TYPES as readonly string[]).includes(value ?? '');
+}
+
+/** Contamination events on a grow (D22). */
+export const CONTAMINATION_KINDS = [
+	'trich',
+	'cobweb',
+	'bacterial',
+	'black_mold',
+	'other_mold',
+	'pests',
+	'other'
+] as const;
+export type ContaminationKind = (typeof CONTAMINATION_KINDS)[number];
+
+export const CONTAMINATION_SEVERITIES = ['spot', 'patch', 'widespread'] as const;
+export type ContaminationSeverity = (typeof CONTAMINATION_SEVERITIES)[number];
+
+export const CONTAMINATION_ACTIONS = ['watching', 'spot_treated', 'cut_out', 'tossed'] as const;
+export type ContaminationAction = (typeof CONTAMINATION_ACTIONS)[number];
+
+/** Words shown on the buttons; the stored values stay short. */
+export const CONTAMINATION_LABELS: Record<string, string> = {
+	trich: 'Trich (green)',
+	cobweb: 'Cobweb',
+	bacterial: 'Bacterial (wet, sour)',
+	black_mold: 'Black mold',
+	other_mold: 'Other mold',
+	pests: 'Pests (gnats, mites)',
+	other: 'Other',
+	spot: 'Spot',
+	patch: 'Patch',
+	widespread: 'Widespread',
+	watching: 'Watching',
+	spot_treated: 'Spot treated',
+	cut_out: 'Cut out',
+	tossed: 'Tossed'
+};
+
 /** "grow_container" becomes "Grow container". */
 export function label(value: string): string {
 	const s = value.replace(/_/g, ' ');

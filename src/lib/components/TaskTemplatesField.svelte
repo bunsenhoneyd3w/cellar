@@ -3,8 +3,9 @@
 	import { MAX_REPEAT_DAYS, pickerFor } from '#lib/recurrence.ts';
 	import type { TaskTemplate } from '#lib/protocol-body.ts';
 
-	type Props = { tasks: TaskTemplate[] };
-	let { tasks }: Props = $props();
+	/** `phases` is the fixed phase list of the batch type; when given, a task can belong to a phase (D26). */
+	type Props = { tasks: TaskTemplate[]; phases?: readonly string[] };
+	let { tasks, phases = [] }: Props = $props();
 
 	// Each row is posted as task_<n>_<field>. Rows left without a name are ignored.
 	type Row = {
@@ -14,6 +15,7 @@
 		repeat: string;
 		everyDays: number | null;
 		endDay: number | null;
+		phase: string;
 	};
 	let nextKey = 0;
 	const toRow = (t: TaskTemplate): Row => {
@@ -24,7 +26,8 @@
 			startDay: t.startDay,
 			repeat: p.choice,
 			everyDays: p.everyDays,
-			endDay: t.endDay
+			endDay: t.endDay,
+			phase: t.phase ?? ''
 		};
 	};
 	const blank = (): Row => ({
@@ -33,7 +36,8 @@
 		startDay: 1,
 		repeat: '',
 		everyDays: 3,
-		endDay: null
+		endDay: null,
+		phase: ''
 	});
 	// Starts from the saved list; edits after that live only in the form until it is saved.
 	let rows = $state<Row[]>(untrack(() => tasks.map(toRow)));
@@ -42,7 +46,9 @@
 <fieldset>
 	<legend class="label">Tasks for each batch</legend>
 	<p class="mb-2 text-sm text-gray-500">
-		Added to every batch started from this protocol. Day 0 is the start day.
+		Added to every batch started from this protocol. Day 0 is the start day.{phases.length
+			? ' A phase task starts when the batch enters its phase and stops when it leaves.'
+			: ''}
 	</p>
 	<input type="hidden" name="taskCount" value={rows.length} />
 	<div class="space-y-3">
@@ -52,7 +58,7 @@
 					<input
 						class="input flex-1"
 						name="task_{i}_title"
-						placeholder="Top up airlock water"
+						placeholder={phases.length ? 'Mist and fan' : 'Top up airlock water'}
 						aria-label="Task {i + 1} name"
 						bind:value={row.title}
 					/>
@@ -64,8 +70,25 @@
 					>
 				</div>
 				<div class="grid grid-cols-2 gap-2">
+					{#if phases.length}
+						<label class="col-span-2 text-sm text-gray-600">
+							When
+							<select
+								class="input mt-1"
+								name="task_{i}_phase"
+								bind:value={row.phase}
+								onchange={() => {
+									// "During fruiting" usually means from the day fruiting starts.
+									if (row.phase && row.startDay === 1) row.startDay = 0;
+								}}
+							>
+								<option value="">Counted from Day 0</option>
+								{#each phases as ph (ph)}<option value={ph}>During {ph}</option>{/each}
+							</select>
+						</label>
+					{/if}
 					<label class="text-sm text-gray-600">
-						First day
+						{row.phase ? 'Days into the phase' : 'First day'}
 						<input
 							class="input mt-1"
 							name="task_{i}_start"
@@ -98,7 +121,7 @@
 							/>
 						</label>
 					{/if}
-					{#if row.repeat}
+					{#if row.repeat && !row.phase}
 						<label class="text-sm text-gray-600">
 							Last day (optional)
 							<input

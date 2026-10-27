@@ -31,6 +31,7 @@ describe('database', () => {
 			[
 				'batch',
 				'batch_equipment',
+				'contamination',
 				'equipment',
 				'inventory_item',
 				'observation',
@@ -107,5 +108,41 @@ describe('migration safety', () => {
 		expect(b?.protocolSnapshotJson?.body.expectedDays).toBe(14);
 		const r = db.select().from(schema.reading).where(eq(schema.reading.id, 'rdg_aaaaaaaaaa')).get();
 		expect(r).toMatchObject({ kind: 'ph', value: 3.6, unit: 'pH' });
+	});
+
+	// Phase 3 (migration 3) adds observation.flush and the contamination table.
+	// A ferment check-in and a Phase 2 repeating task, written the way
+	// migration 2 left the database, must load with no flush and no events.
+	it('keeps Phase 2 check-ins and tasks readable after the Phase 3 migrations', () => {
+		const db = openDb(':memory:', migrationsUpTo(2));
+		const t = '2026-10-26T20:00:00-05:00';
+		db.$client.exec(`
+			insert into protocol (id, family_id, name, batch_type, version, body_json, created_at, updated_at)
+				values ('pro_bbbbbbbbbb', 'prf_bbbbbbbbbb', 'Kraut', 'ferment', 1, '{"ingredients":[],"steps":[],"targets":[],"expectedDays":21,"tasks":[{"title":"Top up airlock water","startDay":1,"recurrence":"weekly","endDay":28}]}', '${t}', '${t}');
+			insert into batch (id, name, batch_type, protocol_id, started_at, status, phase, created_at, updated_at)
+				values ('bat_bbbbbbbbbb', 'Ferment 002 Kraut', 'ferment', 'pro_bbbbbbbbbb', '${t}', 'active', 'primary ferment', '${t}', '${t}');
+			insert into observation (id, batch_id, observed_at, phase, note, created_at, updated_at)
+				values ('obs_bbbbbbbbbb', 'bat_bbbbbbbbbb', '${t}', 'primary ferment', 'Topped up', '${t}', '${t}');
+			insert into task (id, batch_id, title, due_at, recurrence, repeat_until, created_at, updated_at)
+				values ('tsk_bbbbbbbbbb', 'bat_bbbbbbbbbb', 'Top up airlock water', '2026-10-27', 'weekly', '2026-11-23', '${t}', '${t}');
+		`);
+
+		migrateToLatest(db);
+
+		const o = db
+			.select()
+			.from(schema.observation)
+			.where(eq(schema.observation.id, 'obs_bbbbbbbbbb'))
+			.get();
+		expect(o).toMatchObject({ note: 'Topped up', flush: null });
+		expect(db.select().from(schema.contamination).all()).toEqual([]);
+		const task = db.select().from(schema.task).where(eq(schema.task.id, 'tsk_bbbbbbbbbb')).get();
+		expect(task).toMatchObject({ recurrence: 'weekly', repeatUntil: '2026-11-23' });
+		const p = db
+			.select()
+			.from(schema.protocol)
+			.where(eq(schema.protocol.id, 'pro_bbbbbbbbbb'))
+			.get();
+		expect(p?.bodyJson.tasks?.[0]).toMatchObject({ title: 'Top up airlock water', endDay: 28 });
 	});
 });

@@ -2,18 +2,23 @@ import { error, redirect } from '@sveltejs/kit';
 import { getDb } from '#lib/server/db/index.ts';
 import { getBatchDetail } from '#lib/server/batches.ts';
 import { finishBatch } from '#lib/server/outcomes.ts';
+import { suggestedYield } from '#lib/server/grows.ts';
 import { num, oneOf, str } from '#lib/server/form.ts';
 import { inputFail } from '#lib/server/actions.ts';
 import { fromLocalInput, toLocalInput } from '#lib/time.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = ({ params }) => {
+export const load: PageServerLoad = ({ params, url }) => {
 	const detail = getBatchDetail(getDb(), params.id);
 	if (!detail) error(404, 'Batch not found');
 	return {
 		batch: detail.batch,
 		outcome: detail.outcome,
-		endedAt: toLocalInput(detail.batch.endedAt)
+		endedAt: toLocalInput(detail.batch.endedAt),
+		// A grow's yield starts as the total of its flushes (D23); it can still be changed.
+		suggested: detail.outcome?.yieldValue == null ? suggestedYield(detail.flushes) : null,
+		flushCount: detail.flushes.flushes.length,
+		failed: url.searchParams.get('status') === 'failed'
 	};
 };
 

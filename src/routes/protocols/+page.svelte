@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { label } from '#lib/enums.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -13,7 +14,9 @@
 </div>
 
 {#if data.protocols.length === 0}
-	<p class="empty">No protocols yet. Import a recipe from Paprika or write one.</p>
+	<p class="empty">
+		No protocols yet. Import a recipe from Paprika, or write a recipe or grow tek.
+	</p>
 {:else}
 	<ul class="card divide-y divide-gray-200">
 		{#each data.protocols as p (p.id)}
@@ -21,7 +24,7 @@
 				<a href={resolve('/protocols/[id]', { id: p.id })} class="block px-4 py-3">
 					<span class="block font-medium">{p.name}</span>
 					<span class="block text-sm text-gray-500">
-						Version {p.version}{p.source ? ` · ${p.source}` : ''}
+						{label(p.batchType)} · version {p.version}{p.source ? ` · ${p.source}` : ''}
 					</span>
 				</a>
 			</li>

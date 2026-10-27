@@ -8,18 +8,28 @@ export type TargetRange = {
 	min: number | null;
 	max: number | null;
 	unit: string;
+	/**
+	 * Added in Phase 3 (D25). A target for one phase wins over one with no
+	 * phase, which applies to every phase. Targets saved before have none.
+	 */
+	phase?: string | null;
 };
 
 /**
  * A task the protocol adds to every batch started from it (D19). Days count
  * from Day 0, so "day 1, weekly, until day 28" means the day after the start,
  * then every week through day 28.
+ *
+ * A phase task (D26, Phase 3) is created when the batch enters that phase
+ * instead; its startDay counts from that day and it has no endDay, because it
+ * stops when the batch leaves the phase.
  */
 export type TaskTemplate = {
 	title: string;
 	startDay: number;
 	recurrence: string | null;
 	endDay: number | null;
+	phase?: string | null;
 };
 
 export type ProtocolBody = {
@@ -56,6 +66,18 @@ export function emptyBody(): ProtocolBody {
 	return { ingredients: [], steps: [], targets: [], expectedDays: null };
 }
 
+/** The target that applies to a reading kind in a phase: the phase's own first, then the all-phases one. */
+export function targetFor(
+	targets: TargetRange[],
+	kind: string,
+	phase: string | null | undefined
+): TargetRange | undefined {
+	return (
+		(phase ? targets.find((t) => t.kind === kind && t.phase === phase) : undefined) ??
+		targets.find((t) => t.kind === kind && !t.phase)
+	);
+}
+
 /** "3.4 to 4.6 pH", "up to 4.6 pH", or "at least 68 °F". */
 export function formatRange(t: TargetRange): string {
 	if (t.min !== null && t.max !== null) return `${t.min} to ${t.max} ${t.unit}`;
@@ -63,9 +85,18 @@ export function formatRange(t: TargetRange): string {
 	return `at least ${t.min} ${t.unit}`;
 }
 
-/** "Day 1, every week through day 28" or "Day 3". */
+/** "Day 1, every week through day 28", "Day 3", or "During fruiting, every day". */
 export function formatTemplate(t: TaskTemplate): string {
 	const repeat = formatRecurrence(t.recurrence);
+	if (t.phase) {
+		const start =
+			t.startDay > 0 ? `${t.startDay} day${t.startDay === 1 ? '' : 's'} into ${t.phase}` : '';
+		const when = start || `When ${t.phase} starts`;
+		if (!repeat) return when;
+		return start
+			? `From ${start}, ${repeat.toLowerCase()}`
+			: `During ${t.phase}, ${repeat.toLowerCase()}`;
+	}
 	if (!repeat) return `Day ${t.startDay}`;
 	const end = t.endDay !== null ? ` through day ${t.endDay}` : '';
 	return `Day ${t.startDay}, ${repeat.toLowerCase()}${end}`;

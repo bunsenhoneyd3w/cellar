@@ -2,7 +2,7 @@ import { asc, desc, eq } from 'drizzle-orm';
 import type { Db } from './db';
 import { protocol } from './db/schema';
 import { newId } from './db/ids';
-import type { BatchType } from '../enums';
+import { fixedPhases, type BatchType } from '../enums';
 import { bodyTasks, type ProtocolBody } from '../protocol-body';
 import { recurrenceDays } from '../recurrence';
 import { InputError } from './form';
@@ -85,14 +85,20 @@ function sameContent(p: Protocol, input: ProtocolInput) {
 
 function check(input: ProtocolInput) {
 	if (!input.name.trim()) throw new InputError('Give the protocol a name.');
+	// Phases must match the fixed list exactly, or phase tasks and targets would never apply (D27).
+	const phases = fixedPhases(input.batchType) ?? [];
+	const badPhase = (phase: string | null | undefined) => !!phase && !phases.includes(phase);
 	for (const t of input.bodyJson.targets) {
+		const where = t.phase ? ` for ${t.phase}` : '';
 		if (t.min !== null && t.max !== null && t.min > t.max) {
-			throw new InputError(`The ${t.kind} target has a minimum above its maximum.`);
+			throw new InputError(`The ${t.kind} target${where} has a minimum above its maximum.`);
 		}
+		if (badPhase(t.phase)) throw new InputError(`There is no ${t.phase} phase.`);
 	}
 	for (const t of bodyTasks(input.bodyJson)) {
 		const name = t.title.trim();
 		if (!name) throw new InputError('Every task in the list needs a name.');
+		if (badPhase(t.phase)) throw new InputError(`${name}: there is no ${t.phase} phase.`);
 		if (!Number.isInteger(t.startDay) || t.startDay < 0) {
 			throw new InputError(`${name}: the first day is a whole number, 0 or more.`);
 		}

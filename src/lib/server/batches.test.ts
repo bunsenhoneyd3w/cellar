@@ -116,4 +116,27 @@ describe('batches', () => {
 		expect(() => createBatch(db, { name: 'X', protocolId: 'pro_missing000' })).toThrow(/protocol/);
 		expect(() => createBatch(db, { name: ' ', protocolId: p.id })).toThrow(/name/);
 	});
+
+	it('starts a mushroom grow from a mushroom protocol, numbered on its own', () => {
+		const { db, p } = setup();
+		createBatch(db, { name: 'Ferment 001 Classic sauerkraut', protocolId: p.id });
+		const tek = createProtocol(db, {
+			name: 'Blue Oyster',
+			batchType: 'mushroom',
+			bodyJson: emptyBody()
+		});
+		expect(nextBatchNumber(db, 'mushroom')).toBe(1);
+		const grow = createBatch(db, {
+			name: batchName('mushroom', nextBatchNumber(db, 'mushroom'), tek.name),
+			protocolId: tek.id,
+			phase: 'spawn'
+		});
+		expect(grow).toMatchObject({
+			name: 'Grow 001 Blue Oyster',
+			batchType: 'mushroom',
+			phase: 'spawn',
+			status: 'active'
+		});
+		expect(listBatches(db, { type: 'mushroom' }).map((b) => b.id)).toEqual([grow.id]);
+	});
 });

@@ -5,7 +5,9 @@
 	let { data, form }: PageProps = $props();
 	const o = $derived(data.outcome);
 	const editing = $derived(data.batch.status === 'done' || data.batch.status === 'failed');
-	const initialStatus = $derived(data.batch.status === 'failed' ? 'failed' : 'done');
+	const initialStatus = $derived(data.batch.status === 'failed' || data.failed ? 'failed' : 'done');
+	const yieldValue = $derived(o?.yieldValue ?? data.suggested?.value ?? '');
+	const yieldUnit = $derived(o?.yieldUnit ?? data.suggested?.unit ?? '');
 </script>
 
 <h1 class="text-2xl font-bold">{editing ? 'Edit outcome' : 'Finish batch'}</h1>
@@ -50,7 +52,7 @@
 				step="any"
 				min="0"
 				inputmode="decimal"
-				value={o?.yieldValue ?? ''}
+				value={yieldValue}
 			/>
 		</div>
 		<div>
@@ -61,7 +63,7 @@
 				name="yieldUnit"
 				list="yield-units"
 				placeholder="pints"
-				value={o?.yieldUnit ?? ''}
+				value={yieldUnit}
 			/>
 			<datalist id="yield-units">
 				{#each ['pints', 'quarts', 'jars', 'bottles', 'oz', 'lb', 'g', 'gal'] as u (u)}
@@ -70,6 +72,12 @@
 			</datalist>
 		</div>
 	</div>
+	{#if data.suggested}
+		<p class="-mt-3 text-sm text-gray-500">
+			Filled in from {data.flushCount} flush{data.flushCount === 1 ? '' : 'es'}. Change it if you
+			weighed more.
+		</p>
+	{/if}
 
 	<fieldset>
 		<legend class="label">Rating</legend>

@@ -28,7 +28,7 @@
 			{/if}
 			{#if repeat}
 				{#if task.dueAt}·{/if}
-				{repeat}
+				{repeat}{task.phase ? ` during ${task.phase}` : ''}
 			{/if}
 			{#if showBatch && task.batchId}
 				{#if task.dueAt || repeat}·{/if}

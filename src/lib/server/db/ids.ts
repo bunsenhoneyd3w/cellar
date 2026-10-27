@@ -16,6 +16,7 @@ export const ID_PREFIXES = {
 	observation: 'obs',
 	reading: 'rdg',
 	photo: 'pho',
+	contamination: 'ctm',
 	outcome: 'out',
 	inventoryItem: 'inv',
 	task: 'tsk'

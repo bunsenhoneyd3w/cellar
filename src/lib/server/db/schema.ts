@@ -16,6 +16,9 @@ import { nowIso } from '../../time';
 import {
 	BATCH_STATUSES,
 	BATCH_TYPES,
+	CONTAMINATION_ACTIONS,
+	CONTAMINATION_KINDS,
+	CONTAMINATION_SEVERITIES,
 	EQUIPMENT_KINDS,
 	INVENTORY_STATUSES,
 	READING_SOURCES,
@@ -122,6 +125,8 @@ export const observation = sqliteTable(
 		observedAt: text('observed_at').notNull(),
 		phase: text('phase'),
 		note: text('note'),
+		/** Set on mushroom harvests (D23): which flush the harvest weight belongs to. */
+		flush: integer('flush'),
 		...stamps()
 	},
 	(t) => [index('observation_batch').on(t.batchId, t.observedAt)]
@@ -159,6 +164,22 @@ export const photo = sqliteTable(
 		...stamps()
 	},
 	(t) => [index('photo_observation').on(t.observationId)]
+);
+
+/** A contamination event seen on a check-in (D22). Note and photos live on the observation. */
+export const contamination = sqliteTable(
+	'contamination',
+	{
+		id: id('ctm'),
+		observationId: text('observation_id')
+			.notNull()
+			.references(() => observation.id, { onDelete: 'cascade' }),
+		kind: text('kind', { enum: CONTAMINATION_KINDS }).notNull(),
+		severity: text('severity', { enum: CONTAMINATION_SEVERITIES }).notNull(),
+		action: text('action', { enum: CONTAMINATION_ACTIONS }).notNull(),
+		...stamps()
+	},
+	(t) => [index('contamination_observation').on(t.observationId)]
 );
 
 export const outcome = sqliteTable('outcome', {
@@ -207,6 +228,8 @@ export const task = sqliteTable(
 		previousTaskId: text('previous_task_id').references((): AnySQLiteColumn => task.id, {
 			onDelete: 'set null'
 		}),
+		/** Set on tasks that belong to a phase (D26); they live only while the batch is in it. */
+		phase: text('phase'),
 		...stamps()
 	},
 	(t) => [index('task_due').on(t.dueAt), index('task_batch').on(t.batchId)]
@@ -222,6 +245,7 @@ export const ALL_TABLES = {
 	observation,
 	reading,
 	photo,
+	contamination,
 	outcome,
 	inventory_item: inventoryItem,
 	task
