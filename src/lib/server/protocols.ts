@@ -3,7 +3,7 @@ import type { Db } from './db';
 import { protocol } from './db/schema';
 import { newId } from './db/ids';
 import { fixedPhases, type BatchType } from '../enums';
-import { bodyTasks, type ProtocolBody } from '../protocol-body';
+import { bodyProcessing, bodyTasks, type ProtocolBody } from '../protocol-body';
 import { recurrenceDays } from '../recurrence';
 import { InputError } from './form';
 import { recipeNotes, recipeToBody, type PaprikaRecipe } from './paprika';
@@ -107,6 +107,28 @@ function check(input: ProtocolInput) {
 		}
 		if (t.endDay !== null && (!Number.isInteger(t.endDay) || t.endDay < t.startDay)) {
 			throw new InputError(`${name}: the last day is a whole number on or after the first day.`);
+		}
+	}
+	checkProcessing(input.bodyJson);
+}
+
+function checkProcessing(body: ProtocolBody) {
+	const months = body.shelfLifeMonths;
+	if (months != null && !(Number.isInteger(months) && months >= 1 && months <= 120)) {
+		throw new InputError('Shelf life is a whole number of months, 1 to 120.');
+	}
+	const p = bodyProcessing(body);
+	if (!p) return;
+	if (p.headspaceIn !== null && !(p.headspaceIn >= 0 && p.headspaceIn <= 4)) {
+		throw new InputError('Headspace is 0 to 4 inches.');
+	}
+	for (const j of p.jars) {
+		if (!j.size.trim()) throw new InputError('Every processing time needs a jar size.');
+		if (j.minutes !== null && !(j.minutes > 0 && j.minutes <= 600)) {
+			throw new InputError(`${j.size}: minutes are more than 0 and at most 600.`);
+		}
+		if (j.psi !== null && !(j.psi > 0 && j.psi <= 20)) {
+			throw new InputError(`${j.size}: psi is more than 0 and at most 20.`);
 		}
 	}
 }

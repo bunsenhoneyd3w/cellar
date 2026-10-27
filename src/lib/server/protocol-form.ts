@@ -1,8 +1,14 @@
-import { fixedPhases, isStartableType, type BatchType } from '../enums';
+import { PRESERVE_METHODS, fixedPhases, isStartableType, type BatchType } from '../enums';
 import { trackedKindsFor } from '../reading-kinds';
-import type { ProtocolBody, TargetRange, TaskTemplate } from '../protocol-body';
+import type {
+	JarTime,
+	Processing,
+	ProtocolBody,
+	TargetRange,
+	TaskTemplate
+} from '../protocol-body';
 import { recurrenceDays, recurrenceFor, recurrenceFromPicker } from '../recurrence';
-import { lines, num, str } from './form';
+import { lines, num, oneOf, str } from './form';
 import type { ProtocolInput } from './protocols';
 
 /**
@@ -37,6 +43,7 @@ export function readProtocolForm(
 		}
 	}
 	const tasks = readTaskTemplates(fd, phases);
+	const preserve = batchType === 'preserve';
 	return {
 		name: str(fd, 'name') ?? '',
 		batchType,
@@ -51,12 +58,31 @@ export function readProtocolForm(
 			servings: str(fd, 'servings'),
 			sourceUrl: str(fd, 'sourceUrl'),
 			// Left off entirely when empty, so saving an old protocol unchanged makes no new version.
-			tasks: tasks.length ? tasks : undefined
+			tasks: tasks.length ? tasks : undefined,
+			// Only preserves have these (D28, D30); other bodies keep their old shape.
+			processing: preserve ? readProcessing(fd) : undefined,
+			shelfLifeMonths: preserve ? num(fd, 'shelfLifeMonths') : undefined
 		}
 	};
 }
 
 const MAX_TASK_ROWS = 50;
+const MAX_JAR_ROWS = 20;
+
+/** Reads the method, headspace, and jar_<n>_<field> rows; rows without a size or time are skipped. */
+function readProcessing(fd: FormData): Processing {
+	const method = oneOf(fd, 'method', PRESERVE_METHODS);
+	const count = Math.min(num(fd, 'jarCount') ?? 0, MAX_JAR_ROWS);
+	const jars: JarTime[] = [];
+	for (let i = 0; i < count; i++) {
+		const size = str(fd, `jar_${i}_size`) ?? '';
+		const minutes = num(fd, `jar_${i}_minutes`);
+		const psi = method === 'pressure' ? num(fd, `jar_${i}_psi`) : null;
+		if (!size && minutes === null && psi === null) continue;
+		jars.push({ size, minutes, psi });
+	}
+	return { method, headspaceIn: num(fd, 'headspaceIn'), jars };
+}
 
 /** Reads the task_<n>_<field> rows; rows without a name are skipped. */
 function readTaskTemplates(fd: FormData, phases: readonly string[]): TaskTemplate[] {

@@ -3,7 +3,8 @@
 	import { formatDate } from '#lib/time.ts';
 	import { label } from '#lib/enums.ts';
 	import { kindLabel } from '#lib/reading-kinds.ts';
-	import { bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
+	import ProcessingCard from '#lib/components/ProcessingCard.svelte';
+	import { bodyProcessing, bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -40,6 +41,13 @@
 		{#if body.expectedDays}About {body.expectedDays} days.{/if}
 		{#if body.servings}Makes {body.servings}.{/if}
 	</p>
+{/if}
+
+{#if bodyProcessing(body)}
+	<section class="mb-6">
+		<h2 class="section-title">Processing</h2>
+		<ProcessingCard {body} />
+	</section>
 {/if}
 
 <section class="mb-6">

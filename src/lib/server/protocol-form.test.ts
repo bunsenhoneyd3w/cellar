@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { testDb } from './db/test-helpers';
 import { readProtocolForm } from './protocol-form';
 import { createProtocol, reviseProtocol } from './protocols';
-import { targetFor, formatTemplate } from '../protocol-body';
+import { createBatch } from './batches';
+import { listOpenTasks } from './tasks';
+import {
+	SEAL_CHECK_TASK,
+	bodyProcessing,
+	formatHeadspace,
+	targetFor,
+	formatTemplate
+} from '../protocol-body';
 
 function form(fields: Record<string, string>) {
 	const fd = new FormData();
@@ -140,5 +148,109 @@ describe('protocol form', () => {
 				}
 			})
 		).toThrow(/for fruiting has a minimum above/);
+	});
+});
+
+describe('preserve protocols (D28, D30, D33)', () => {
+	const salsa = {
+		batchType: 'preserve',
+		name: 'Salsa',
+		method: 'water_bath',
+		headspaceIn: '0.5',
+		jarCount: '3',
+		jar_0_size: 'pint',
+		jar_0_minutes: '20',
+		jar_0_psi: '10',
+		jar_1_size: '',
+		jar_1_minutes: '',
+		jar_2_size: 'half pint',
+		jar_2_minutes: '15',
+		shelfLifeMonths: '18'
+	};
+
+	it('reads the method, headspace, jar times, and shelf life', () => {
+		const input = readProtocolForm(form(salsa));
+		expect(input.batchType).toBe('preserve');
+		expect(input.bodyJson.processing).toEqual({
+			method: 'water_bath',
+			headspaceIn: 0.5,
+			// Psi is dropped for a water bath; the empty middle row is skipped.
+			jars: [
+				{ size: 'pint', minutes: 20, psi: null },
+				{ size: 'half pint', minutes: 15, psi: null }
+			]
+		});
+		expect(input.bodyJson.shelfLifeMonths).toBe(18);
+		expect(createProtocol(testDb(), input).bodyJson.processing?.jars).toHaveLength(2);
+	});
+
+	it('keeps psi for a pressure canner', () => {
+		const input = readProtocolForm(
+			form({
+				batchType: 'preserve',
+				name: 'Green beans',
+				method: 'pressure',
+				jarCount: '1',
+				jar_0_size: 'quart',
+				jar_0_minutes: '25',
+				jar_0_psi: '15'
+			})
+		);
+		expect(input.bodyJson.processing?.jars).toEqual([{ size: 'quart', minutes: 25, psi: 15 }]);
+	});
+
+	it('rejects a time with no jar size, and a shelf life out of range', () => {
+		const db = testDb();
+		expect(() =>
+			createProtocol(db, readProtocolForm(form({ ...salsa, jar_1_minutes: '30' })))
+		).toThrow(/needs a jar size/);
+		expect(() =>
+			createProtocol(db, readProtocolForm(form({ ...salsa, shelfLifeMonths: '1.5' })))
+		).toThrow(/Shelf life/);
+		expect(() =>
+			createProtocol(db, readProtocolForm(form({ ...salsa, jar_0_minutes: '-5' })))
+		).toThrow(/minutes/);
+	});
+
+	it('leaves processing off ferment and mushroom protocols, old and new', () => {
+		const kraut = readProtocolForm(form({ ...salsa, batchType: 'ferment', name: 'Kraut' }));
+		expect(kraut.bodyJson.processing).toBeUndefined();
+		expect(kraut.bodyJson.shelfLifeMonths).toBeUndefined();
+		const db = testDb();
+		const saved = createProtocol(db, kraut);
+		expect('processing' in saved.bodyJson).toBe(false);
+		expect(bodyProcessing(saved.bodyJson)).toBeUndefined();
+		// Saving the same ferment again makes no new version.
+		expect(reviseProtocol(db, saved.id, kraut).version).toBe(1);
+	});
+
+	it('starts a batch with the processing in its snapshot and the seal check task', () => {
+		const db = testDb();
+		const body = readProtocolForm(form(salsa)).bodyJson;
+		const p = createProtocol(db, {
+			...readProtocolForm(form(salsa)),
+			bodyJson: { ...body, tasks: [SEAL_CHECK_TASK] }
+		});
+		const b = createBatch(db, {
+			name: 'Preserve 001 Salsa',
+			protocolId: p.id,
+			startedAt: '2026-10-27T09:00:00-05:00',
+			phase: 'prep'
+		});
+		expect(b.batchType).toBe('preserve');
+		expect(b.protocolSnapshotJson?.body.processing?.method).toBe('water_bath');
+		const tasks = listOpenTasks(db, { batchId: b.id });
+		expect(tasks.map((t) => [t.title, t.dueAt])).toEqual([
+			['Check seals, remove rings, label', '2026-10-28']
+		]);
+	});
+
+	it('writes headspace as a fraction', () => {
+		expect(formatHeadspace(0.5)).toBe('1/2 in');
+		expect(formatHeadspace(0.25)).toBe('1/4 in');
+		expect(formatHeadspace(1)).toBe('1 in');
+		expect(formatHeadspace(1.25)).toBe('1 1/4 in');
+		expect(formatHeadspace(0.3)).toBe('0.3 in');
+		expect(formatHeadspace(null)).toBe('');
 	});
 });
