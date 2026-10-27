@@ -1,11 +1,11 @@
 import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { openDb, MIGRATIONS_DIR, type Db } from './index';
+import { openDb, MIGRATIONS_DIR, type OpenDb } from './index';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 
 /** A fresh in-memory database with every migration applied. */
-export function testDb(): Db {
+export function testDb(): OpenDb {
 	return openDb(':memory:');
 }
 
@@ -32,6 +32,6 @@ export function migrationCount(): number {
 	return journal.entries.length;
 }
 
-export function migrateToLatest(db: Db) {
+export function migrateToLatest(db: OpenDb) {
 	migrate(db, { migrationsFolder: MIGRATIONS_DIR });
 }

@@ -10,6 +10,11 @@
 	// Bottom bar so the main places are under the thumb on a phone.
 	const nav = [
 		{ href: resolve('/'), label: 'Today', match: (p: string) => p === '/' },
+		{
+			href: resolve('/protocols'),
+			label: 'Protocols',
+			match: (p: string) => p.startsWith('/protocols')
+		},
 		{ href: resolve('/more'), label: 'More', match: (p: string) => p.startsWith('/more') }
 	];
 </script>
