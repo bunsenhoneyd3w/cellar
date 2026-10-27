@@ -4,14 +4,17 @@
 	"description": "Lab notebook for the basement grow and preservation room",
 	"start_url": "/",
 	"display": "standalone",
-	"background_color": "#f9fafb",
-	"theme_color": "#1f2937",
+	"background_color": "#f4efe6",
+	"theme_color": "#f4efe6",
 	"icons": [
+		{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+		{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
 		{
-			"src": "/icon.svg",
-			"sizes": "any",
-			"type": "image/svg+xml",
-			"purpose": "any maskable"
-		}
+			"src": "/icon-maskable-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		},
+		{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
 	]
 }

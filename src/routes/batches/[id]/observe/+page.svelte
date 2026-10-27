@@ -11,6 +11,8 @@
 		label
 	} from '#lib/enums.ts';
 	import PhaseButtons from '#lib/components/PhaseButtons.svelte';
+	import { onMount } from 'svelte';
+	import { clearDraft, readDraft, writeDraft } from '#lib/draft.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -19,6 +21,7 @@
 	// readings, camera first, and Save always within reach at the bottom.
 
 	let values = $state<Record<string, string>>({});
+	let note = $state('');
 	let photos = $state<{ file: File; url: string }[]>([]);
 	let saving = $state(false);
 	let observedAt = $state('');
@@ -64,11 +67,47 @@
 		photos.splice(i, 1);
 	}
 
+	// Typing is kept on the phone until the save goes through (D52).
+	let draftReady = $state(false);
+	let restored = $state(false);
+	let unreachable = $state(false);
+	onMount(() => {
+		const d = readDraft(localStorage, data.batch.id);
+		if (d) {
+			values = d.values;
+			note = d.note;
+			restored = true;
+		}
+		draftReady = true;
+	});
+	$effect(() => {
+		const draft = { note, values: $state.snapshot(values) };
+		if (draftReady) writeDraft(localStorage, data.batch.id, draft);
+	});
+	function forgetDraft() {
+		clearDraft(localStorage, data.batch.id);
+		values = {};
+		note = '';
+		restored = false;
+	}
+
 	const submit: SubmitFunction = ({ formData }) => {
 		saving = true;
 		formData.delete('photos');
 		for (const p of photos) formData.append('photos', p.file);
-		return async ({ update }) => {
+		return async ({ result, update }) => {
+			// The request never reached the server (Wi-Fi dropped, computer asleep):
+			// stay on the form with everything still filled in.
+			if (result.type === 'error') {
+				unreachable = true;
+				saving = false;
+				return;
+			}
+			unreachable = false;
+			if (result.type === 'redirect') {
+				draftReady = false;
+				clearDraft(localStorage, data.batch.id);
+			}
 			await update({ reset: false });
 			saving = false;
 		};
@@ -81,6 +120,18 @@
 <h1 class="mb-4 text-xl font-bold">{data.batch.name}</h1>
 
 {#if form?.error}<p class="error">{form.error}</p>{/if}
+{#if unreachable}
+	<p class="error" role="alert">
+		Couldn't save: Cellar didn't answer. Check the Wi-Fi, then tap Save again. Everything you typed
+		and the photos are still here.
+	</p>
+{/if}
+{#if restored}
+	<p class="notice mb-4 flex items-center justify-between gap-3">
+		<span>Brought back what you typed last time. Photos need adding again.</span>
+		<button type="button" class="shrink-0 underline" onclick={forgetDraft}>Clear</button>
+	</p>
+{/if}
 
 {#snippet choices(name: string, values: readonly string[], cols: string, legend: string)}
 	<fieldset>
@@ -312,6 +363,7 @@
 			id="note"
 			name="note"
 			rows="3"
+			bind:value={note}
 			placeholder={data.contamination
 				? 'Colonization, pins, smell, color, anything off'
 				: (NOTE_HINTS[data.batch.batchType] ?? 'Smell, color, bubbles, film, anything off')}
