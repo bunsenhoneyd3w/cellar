@@ -68,7 +68,12 @@ export function flushSummary(db: Db, batchId: string) {
 		if (r.unit === 'g') f.grams += r.value;
 		else skipped++;
 	}
-	const flushes: FlushTotal[] = [...byFlush.values()].map(({ seen: _seen, ...f }) => f);
+	const flushes: FlushTotal[] = [...byFlush.values()].map((f) => ({
+		flush: f.flush,
+		harvestedAt: f.harvestedAt,
+		harvests: f.harvests,
+		grams: f.grams
+	}));
 	return {
 		flushes,
 		totalGrams: flushes.reduce((sum, f) => sum + f.grams, 0),
