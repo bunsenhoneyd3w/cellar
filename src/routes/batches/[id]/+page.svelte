@@ -4,10 +4,12 @@
 	import ReadingChart from '#lib/components/ReadingChart.svelte';
 	import TaskRow from '#lib/components/TaskRow.svelte';
 	import UndoBar from '#lib/components/UndoBar.svelte';
+	import ProcessingCard from '#lib/components/ProcessingCard.svelte';
 	import { dayNumber, formatDate, formatDateTime } from '#lib/time.ts';
 	import { CONTAMINATION_LABELS } from '#lib/enums.ts';
-	import { bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
+	import { bodyProcessing, bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
 	import { READING_KINDS, kindLabel } from '#lib/reading-kinds.ts';
+	import { formatCount } from '#lib/shelf.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -89,6 +91,14 @@
 {/if}
 
 {#if form?.error}<p class="error">{form.error}</p>{/if}
+
+{#if !finished && snap && bodyProcessing(snap.body)}
+	<!-- Up top while canning, so the time for each jar size is one glance away (D28). -->
+	<section class="mb-6">
+		<h2 class="section-title">Processing</h2>
+		<ProcessingCard body={snap.body} />
+	</section>
+{/if}
 
 {#if !finished}
 	<section class="mb-6">
@@ -194,6 +204,9 @@
 {#if snap}
 	<details class="card mb-6 px-4 py-3">
 		<summary class="cursor-pointer font-medium">Method as started (v{snap.version})</summary>
+		{#if finished && bodyProcessing(snap.body)}
+			<div class="mt-4"><ProcessingCard body={snap.body} /></div>
+		{/if}
 		{#if snap.body.ingredients.length}
 			<h3 class="section-title mt-4">{grow ? 'Materials' : 'Ingredients'}</h3>
 			<ul class="list-inside list-disc text-gray-700">
@@ -252,6 +265,35 @@
 				<p class="whitespace-pre-line">{data.outcome.wouldChange}</p>
 			{/if}
 		</div>
+	</section>
+{/if}
+
+{#if finished || data.shelfItems.length}
+	<!-- What this batch put on the shelf (D29, D32); more can be added any time. -->
+	<section class="mb-6">
+		<h2 class="section-title">On the shelf</h2>
+		{#if data.shelfItems.length}
+			<ul class="card mb-2 divide-y divide-gray-100">
+				{#each data.shelfItems as item (item.id)}
+					<li>
+						<a
+							href={resolve('/inventory/[id]', { id: item.id })}
+							class="flex justify-between gap-3 px-4 py-2"
+						>
+							<span>
+								{item.name}
+								<span class="block text-sm text-gray-500">{item.spacePath ?? 'No shelf'}</span>
+							</span>
+							<span class="shrink-0 text-right text-gray-700">
+								{item.status === 'gone' ? 'Gone' : formatCount(item.quantity, item.unit)}
+							</span>
+						</a>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a class="btn w-full" href={`${resolve('/inventory/new')}?batch=${b.id}`}>Add to shelf</a>
 	</section>
 {/if}
 

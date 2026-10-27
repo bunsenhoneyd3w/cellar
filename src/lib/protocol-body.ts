@@ -2,6 +2,7 @@
 // fields, and old protocols without them must still load.
 
 import { formatRecurrence } from './recurrence';
+import type { PreserveMethod } from './enums';
 
 export type TargetRange = {
 	kind: string;
@@ -32,6 +33,21 @@ export type TaskTemplate = {
 	phase?: string | null;
 };
 
+/** Processing time for one jar size (D28), already adjusted for altitude by whoever typed it. */
+export type JarTime = {
+	size: string;
+	minutes: number | null;
+	/** Pressure canning only. */
+	psi: number | null;
+};
+
+/** How a preserve is processed (D28). Added in Phase 4; other bodies have none. */
+export type Processing = {
+	method: PreserveMethod | null;
+	headspaceIn: number | null;
+	jars: JarTime[];
+};
+
 export type ProtocolBody = {
 	ingredients: string[];
 	steps: string[];
@@ -43,6 +59,9 @@ export type ProtocolBody = {
 	paprikaUid?: string | null;
 	/** Added in Phase 2. Protocols and snapshots saved before then have none. */
 	tasks?: TaskTemplate[];
+	/** Added in Phase 4 for preserves (D28, D30). */
+	processing?: Processing;
+	shelfLifeMonths?: number | null;
 };
 
 /** Frozen copy of a protocol stored on a batch at creation (CLAUDE.md rule 4). */
@@ -61,6 +80,40 @@ export type ProtocolSnapshot = {
 export function bodyTasks(body: ProtocolBody | null | undefined): TaskTemplate[] {
 	return body?.tasks ?? [];
 }
+
+/** The processing details of a body, or undefined for bodies without any. */
+export function bodyProcessing(body: ProtocolBody | null | undefined): Processing | undefined {
+	const p = body?.processing;
+	if (!p) return undefined;
+	return { method: p.method ?? null, headspaceIn: p.headspaceIn ?? null, jars: p.jars ?? [] };
+}
+
+const FRACTIONS: Record<string, string> = {
+	'0.125': '1/8',
+	'0.25': '1/4',
+	'0.375': '3/8',
+	'0.5': '1/2',
+	'0.625': '5/8',
+	'0.75': '3/4',
+	'0.875': '7/8'
+};
+
+/** 0.5 reads as "1/2 in", 1.25 as "1 1/4 in", 0.3 as "0.3 in". */
+export function formatHeadspace(inches: number | null | undefined): string {
+	if (inches == null) return '';
+	const whole = Math.trunc(inches);
+	const frac = FRACTIONS[String(Math.round((inches - whole) * 1000) / 1000)];
+	if (frac) return `${whole ? `${whole} ` : ''}${frac} in`;
+	return `${inches} in`;
+}
+
+/** The task a new preserve protocol starts with (D33); it can be edited or removed. */
+export const SEAL_CHECK_TASK: TaskTemplate = {
+	title: 'Check seals, remove rings, label',
+	startDay: 1,
+	recurrence: null,
+	endDay: null
+};
 
 export function emptyBody(): ProtocolBody {
 	return { ingredients: [], steps: [], targets: [], expectedDays: null };

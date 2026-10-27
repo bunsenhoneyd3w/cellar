@@ -306,7 +306,9 @@
 			rows="3"
 			placeholder={data.contamination
 				? 'Colonization, pins, smell, color, anything off'
-				: 'Smell, color, bubbles, film, anything off'}></textarea>
+				: data.batch.batchType === 'preserve'
+					? 'Into the canner, jars sealed or not, anything off'
+					: 'Smell, color, bubbles, film, anything off'}></textarea>
 	</section>
 
 	{#if !data.fixedPhases}

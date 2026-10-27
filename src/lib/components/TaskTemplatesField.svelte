@@ -4,8 +4,8 @@
 	import type { TaskTemplate } from '#lib/protocol-body.ts';
 
 	/** `phases` is the fixed phase list of the batch type; when given, a task can belong to a phase (D26). */
-	type Props = { tasks: TaskTemplate[]; phases?: readonly string[] };
-	let { tasks, phases = [] }: Props = $props();
+	type Props = { tasks: TaskTemplate[]; phases?: readonly string[]; placeholder?: string };
+	let { tasks, phases = [], placeholder = 'Top up airlock water' }: Props = $props();
 
 	// Each row is posted as task_<n>_<field>. Rows left without a name are ignored.
 	type Row = {
@@ -58,7 +58,7 @@
 					<input
 						class="input flex-1"
 						name="task_{i}_title"
-						placeholder={phases.length ? 'Mist and fan' : 'Top up airlock water'}
+						{placeholder}
 						aria-label="Task {i + 1} name"
 						bind:value={row.title}
 					/>

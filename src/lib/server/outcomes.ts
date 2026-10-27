@@ -1,9 +1,10 @@
 import { eq } from 'drizzle-orm';
 import type { Db } from './db';
 import { batch, outcome } from './db/schema';
-import { nowIso } from '../time';
+import { localDate, nowIso } from '../time';
 import { InputError } from './form';
 import { getBatch } from './batches';
+import { createItems, type ItemInput } from './inventory';
 
 export type OutcomeInput = {
 	status: 'done' | 'failed';
@@ -15,11 +16,16 @@ export type OutcomeInput = {
 	wouldChange?: string | null;
 };
 
+/** A row from "Add to shelf" on the finish screen (D29); the batch and packed date are filled in. */
+export type ShelfRow = Omit<ItemInput, 'batchId' | 'packedAt'>;
+
 /**
  * Ends a batch: writes its one outcome and sets status and end time together.
- * Running it again on a finished batch edits the outcome.
+ * Running it again on a finished batch edits the outcome. A batch finished as
+ * done can put its jars on the shelf in the same step, packed on the end day;
+ * if one row is wrong, nothing is saved.
  */
-export function finishBatch(db: Db, batchId: string, input: OutcomeInput) {
+export function finishBatch(db: Db, batchId: string, input: OutcomeInput, shelf: ShelfRow[] = []) {
 	if (
 		input.rating != null &&
 		!(Number.isInteger(input.rating) && input.rating >= 1 && input.rating <= 5)
@@ -46,12 +52,20 @@ export function finishBatch(db: Db, batchId: string, input: OutcomeInput) {
 			summary: input.summary ?? null,
 			wouldChange: input.wouldChange ?? null
 		};
-		return tx
+		const row = tx
 			.insert(outcome)
 			.values({ batchId, ...values })
 			.onConflictDoUpdate({ target: outcome.batchId, set: values })
 			.returning()
 			.get();
+		if (input.status === 'done' && shelf.length) {
+			const packedAt = localDate(endedAt);
+			createItems(
+				tx,
+				shelf.map((r) => ({ ...r, batchId, packedAt }))
+			);
+		}
+		return row;
 	});
 }
 

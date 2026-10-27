@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	addMonths,
 	addDays,
 	dayNumber,
 	daysBetween,
@@ -58,5 +59,18 @@ describe('time helpers', () => {
 		expect(formatDueDate('2026-10-26', '2026-10-27')).toBe('Yesterday');
 		expect(formatDueDate('2026-10-30', '2026-10-27')).toBe('Fri, Oct 30');
 		expect(formatDueDate('2027-01-05', '2026-10-27')).toBe('Tue, Jan 5, 2027');
+	});
+});
+
+describe('addMonths', () => {
+	it('adds calendar months and keeps the day', () => {
+		expect(addMonths('2026-10-27', 18)).toBe('2028-04-27');
+		expect(addMonths('2026-12-15', 2)).toBe('2027-02-15');
+	});
+
+	it('lands on the last day of a shorter month', () => {
+		expect(addMonths('2027-01-31', 1)).toBe('2027-02-28');
+		expect(addMonths('2028-01-31', 1)).toBe('2028-02-29');
+		expect(addMonths('2026-08-31', 2)).toBe('2026-10-31');
 	});
 });

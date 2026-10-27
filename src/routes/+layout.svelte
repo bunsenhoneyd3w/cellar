@@ -16,6 +16,11 @@
 			match: (p: string) => p.startsWith('/batches')
 		},
 		{
+			href: resolve('/inventory'),
+			label: 'Shelf',
+			match: (p: string) => p.startsWith('/inventory')
+		},
+		{
 			href: resolve('/protocols'),
 			label: 'Protocols',
 			match: (p: string) => p.startsWith('/protocols')

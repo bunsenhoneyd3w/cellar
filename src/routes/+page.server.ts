@@ -1,6 +1,7 @@
 import { getDb } from '#lib/server/db/index.ts';
 import { listBatches } from '#lib/server/batches.ts';
 import { todayTasks } from '#lib/server/tasks.ts';
+import { shelfSummary } from '#lib/server/inventory.ts';
 import { taskActions } from '#lib/server/task-actions.ts';
 import { localDate } from '#lib/time.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -11,6 +12,7 @@ export const load: PageServerLoad = () => {
 	return {
 		today,
 		tasks: todayTasks(db, today),
+		shelf: shelfSummary(db, today),
 		batches: listBatches(db, { status: ['active', 'planned'] })
 	};
 };

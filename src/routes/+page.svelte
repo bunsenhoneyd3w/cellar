@@ -45,6 +45,29 @@
 
 <p class="mb-5 text-lg font-medium">{summary}</p>
 
+{#if data.shelf.past.length || data.shelf.soon.length}
+	<!-- Jars to eat first (D30); the use-by view has the full list. -->
+	<a
+		href="{resolve('/inventory')}?view=use-by"
+		class="card mb-5 block border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
+	>
+		<span class="font-medium">
+			Shelf: {[
+				data.shelf.past.length ? `${data.shelf.past.length} past use-by` : '',
+				data.shelf.soon.length ? `${data.shelf.soon.length} due within 2 months` : ''
+			]
+				.filter(Boolean)
+				.join(', ')}
+		</span>
+		<span class="block text-sm">
+			{[...data.shelf.past, ...data.shelf.soon]
+				.slice(0, 3)
+				.map((i) => i.name)
+				.join(', ')}{data.shelf.past.length + data.shelf.soon.length > 3 ? ', and more' : ''}
+		</span>
+	</a>
+{/if}
+
 {#if t.overdue.length}
 	<section class="mb-6">
 		<h2 class="section-title text-red-700">Overdue</h2>

@@ -4,6 +4,8 @@ import { createProtocol } from './protocols';
 import { createBatch, getBatchDetail, listBatches } from './batches';
 import { finishBatch, reopenBatch } from './outcomes';
 import { emptyBody } from '../protocol-body';
+import { itemsForBatch } from './inventory';
+import { readShelfRows } from './inventory-form';
 
 function setup() {
 	const db = testDb();
@@ -66,5 +68,48 @@ describe('outcomes', () => {
 		expect(() =>
 			finishBatch(db, b.id, { status: 'done', endedAt: '2026-09-01T00:00:00-05:00' })
 		).toThrow(/before Day 0/);
+	});
+});
+
+describe('finishing onto the shelf (D29)', () => {
+	const done = { status: 'done' as const, endedAt: '2026-10-28T08:00:00-05:00' };
+
+	it('adds the rows with a count, packed on the end day, linked to the batch', () => {
+		const { db, b } = setup();
+		const fd = new FormData();
+		for (const [k, v] of Object.entries({
+			shelfCount: '3',
+			shelf_0_name: 'Hot sauce, 5 oz',
+			shelf_0_quantity: '6',
+			shelf_0_unit: 'bottles',
+			shelf_0_useBy: '2027-04-28',
+			shelf_1_name: 'Hot sauce, pint',
+			shelf_1_quantity: '',
+			shelf_2_name: 'Hot sauce, half pint',
+			shelf_2_quantity: '1'
+		}))
+			fd.set(k, v);
+		finishBatch(db, b.id, done, readShelfRows(fd));
+		expect(
+			itemsForBatch(db, b.id).map((i) => [i.name, i.quantity, i.packedAt, i.useBy, i.status])
+		).toEqual([
+			['Hot sauce, 5 oz', 6, '2026-10-28', '2027-04-28', 'in_stock'],
+			['Hot sauce, half pint', 1, '2026-10-28', null, 'low']
+		]);
+	});
+
+	it('saves nothing when a row is wrong', () => {
+		const { db, b } = setup();
+		expect(() =>
+			finishBatch(db, b.id, done, [{ name: 'Hot sauce', quantity: 6, useBy: '2026-01-01' }])
+		).toThrow(/before the packed date/);
+		expect(getBatchDetail(db, b.id)?.batch.status).toBe('active');
+		expect(itemsForBatch(db, b.id)).toEqual([]);
+	});
+
+	it('puts nothing on the shelf from a failed batch', () => {
+		const { db, b } = setup();
+		finishBatch(db, b.id, { ...done, status: 'failed' }, [{ name: 'Hot sauce', quantity: 6 }]);
+		expect(itemsForBatch(db, b.id)).toEqual([]);
 	});
 });

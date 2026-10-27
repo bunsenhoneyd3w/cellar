@@ -2,14 +2,19 @@
 	import { resolve } from '$app/paths';
 	import ProtocolForm from '#lib/components/ProtocolForm.svelte';
 	import { STARTABLE_TYPES, label } from '#lib/enums.ts';
+	import { SEAL_CHECK_TASK, emptyBody } from '#lib/protocol-body.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+	// A new preserve starts with the seal check task (D33).
+	const start = $derived(
+		data.batchType === 'preserve' ? { ...emptyBody(), tasks: [SEAL_CHECK_TASK] } : undefined
+	);
 </script>
 
 <h1 class="mb-4 text-2xl font-bold">New protocol</h1>
 
-<div class="mb-5 grid grid-cols-2 gap-2" role="group" aria-label="Protocol for">
+<div class="mb-5 grid grid-cols-3 gap-2" role="group" aria-label="Protocol for">
 	{#each STARTABLE_TYPES as t (t)}
 		<a
 			href="{resolve('/protocols/new')}?type={t}"
@@ -23,7 +28,7 @@
 
 {#key data.batchType}
 	<ProtocolForm
-		values={{ source: 'own' }}
+		values={{ source: 'own', bodyJson: start }}
 		batchType={data.batchType}
 		error={form?.error}
 		submitLabel="Save protocol"

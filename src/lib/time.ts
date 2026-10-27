@@ -88,6 +88,24 @@ export function addDays(date: string, days: number): string {
 	return localDate(new Date(y, m - 1, d + days));
 }
 
+/** A date-only value as "Apr 27, 2028", read as a local day (never shifted by the time zone). */
+export function formatDay(date: string | null | undefined): string {
+	if (!isDate(date)) return '';
+	const [y, m, d] = dateParts(date);
+	return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+		month: 'short',
+		day: 'numeric',
+		year: 'numeric'
+	});
+}
+
+/** Calendar months later; a day the month lacks lands on its last day (Jan 31 plus 1 is Feb 28). */
+export function addMonths(date: string, months: number): string {
+	const [y, m, d] = dateParts(date);
+	const lastDay = new Date(y, m - 1 + months + 1, 0).getDate();
+	return localDate(new Date(y, m - 1 + months, Math.min(d, lastDay)));
+}
+
 /** Whole days from one date to another; negative when `to` is earlier. */
 export function daysBetween(from: string, to: string): number {
 	const [y1, m1, d1] = dateParts(from);

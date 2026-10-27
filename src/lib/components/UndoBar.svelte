@@ -1,15 +1,23 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 
+	/** What Undo posts: the text shown, the form action, and its hidden fields. */
+	type Undo = { text: string; action: string; fields: Record<string, string | number> };
 	type Done = { id: string; title: string };
-	type Props = { done?: Done | null };
-	let { done }: Props = $props();
+	/** `done` is a task just ticked off; `undo` is anything else, such as a jar just used. */
+	type Props = { done?: Done | null; undo?: Undo | null };
+	let { done, undo }: Props = $props();
+
+	const offered = $derived<Undo | null>(
+		undo ??
+			(done ? { text: `Done: ${done.title}`, action: '?/undo', fields: { taskId: done.id } } : null)
+	);
 
 	// After a Done, offer Undo for a few seconds in case the wrong row was tapped.
-	let shown = $state<Done | null>(null);
+	let shown = $state<Undo | null>(null);
 	$effect(() => {
-		shown = done ?? null;
-		if (!done) return;
+		shown = offered;
+		if (!offered) return;
 		const timer = setTimeout(() => (shown = null), 6000);
 		return () => clearTimeout(timer);
 	});
@@ -24,17 +32,19 @@
 		<div
 			class="mx-auto flex max-w-xl items-center gap-3 rounded-lg bg-gray-900 py-1 pr-1 pl-4 text-white shadow-lg"
 		>
-			<span class="min-w-0 flex-1 truncate">Done: {shown.title}</span>
+			<span class="min-w-0 flex-1 truncate">{shown.text}</span>
 			<form
 				method="POST"
-				action="?/undo"
+				action={shown.action}
 				use:enhance={() =>
 					async ({ update }) => {
 						shown = null;
 						await update();
 					}}
 			>
-				<input type="hidden" name="taskId" value={shown.id} />
+				{#each Object.entries(shown.fields) as [name, value] (name)}
+					<input type="hidden" {name} {value} />
+				{/each}
 				<button class="min-h-12 px-4 font-semibold underline">Undo</button>
 			</form>
 		</div>

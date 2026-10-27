@@ -3,7 +3,8 @@
 	import { trackedKindsFor } from '#lib/reading-kinds.ts';
 	import { fixedPhases, label, type BatchType } from '#lib/enums.ts';
 	import TaskTemplatesField from '#lib/components/TaskTemplatesField.svelte';
-	import { bodyTasks, type ProtocolBody } from '#lib/protocol-body.ts';
+	import ProcessingField from '#lib/components/ProcessingField.svelte';
+	import { bodyProcessing, bodyTasks, type ProtocolBody } from '#lib/protocol-body.ts';
 
 	type Values = {
 		name?: string;
@@ -18,6 +19,7 @@
 	const kinds = $derived(trackedKindsFor(batchType));
 	const phases = $derived(fixedPhases(batchType) ?? []);
 	const grow = $derived(batchType === 'mushroom');
+	const preserve = $derived(batchType === 'preserve');
 	// Exact match on phase, so an all-phases target never fills a phase row.
 	const target = (kind: string, phase: string | null) =>
 		body?.targets.find((t) => t.kind === kind && (t.phase ?? null) === phase);
@@ -82,6 +84,13 @@
 		<p class="mt-1 text-sm text-gray-500">One per line.</p>
 	</div>
 
+	{#if preserve}
+		<ProcessingField
+			processing={bodyProcessing(body)}
+			shelfLifeMonths={body?.shelfLifeMonths ?? null}
+		/>
+	{/if}
+
 	<div class="grid {grow ? '' : 'grid-cols-2'} gap-3">
 		<div>
 			<label class="label" for="expectedDays"
@@ -127,7 +136,11 @@
 		{/if}
 	</fieldset>
 
-	<TaskTemplatesField tasks={bodyTasks(body)} {phases} />
+	<TaskTemplatesField
+		tasks={bodyTasks(body)}
+		{phases}
+		placeholder={grow ? 'Mist and fan' : preserve ? 'Check seals' : 'Top up airlock water'}
+	/>
 
 	<div>
 		<label class="label" for="source">Source</label>

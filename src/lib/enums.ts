@@ -42,7 +42,8 @@ export const PHASE_SUGGESTIONS: Record<BatchType, string[]> = {
  * Only these get phase tasks and phase targets; other types keep free text.
  */
 export const FIXED_PHASES: Partial<Record<BatchType, readonly string[]>> = {
-	mushroom: PHASE_SUGGESTIONS.mushroom
+	mushroom: PHASE_SUGGESTIONS.mushroom,
+	preserve: PHASE_SUGGESTIONS.preserve
 };
 
 export function fixedPhases(type: BatchType): readonly string[] | undefined {
@@ -50,12 +51,39 @@ export function fixedPhases(type: BatchType): readonly string[] | undefined {
 }
 
 /** Batch types that can have protocols and batches today. The rest arrive in later phases. */
-export const STARTABLE_TYPES = ['ferment', 'mushroom'] as const satisfies readonly BatchType[];
+export const STARTABLE_TYPES = [
+	'ferment',
+	'mushroom',
+	'preserve'
+] as const satisfies readonly BatchType[];
 export type StartableType = (typeof STARTABLE_TYPES)[number];
 
 export function isStartableType(value: string | null | undefined): value is StartableType {
 	return (STARTABLE_TYPES as readonly string[]).includes(value ?? '');
 }
+
+/** How a preserve is put up (D28). Only pressure canning uses psi. */
+export const PRESERVE_METHODS = [
+	'water_bath',
+	'pressure',
+	'steam',
+	'fridge',
+	'freezer',
+	'dehydrate'
+] as const;
+export type PreserveMethod = (typeof PRESERVE_METHODS)[number];
+
+export const PRESERVE_METHOD_LABELS: Record<PreserveMethod, string> = {
+	water_bath: 'Water bath',
+	pressure: 'Pressure canner',
+	steam: 'Steam canner',
+	fridge: 'Fridge',
+	freezer: 'Freezer',
+	dehydrate: 'Dehydrate'
+};
+
+/** Suggested jar sizes; any text is allowed. */
+export const JAR_SIZES = ['4 oz', 'half pint', '12 oz', 'pint', 'pint and a half', 'quart'];
 
 /** Contamination events on a grow (D22). */
 export const CONTAMINATION_KINDS = [
