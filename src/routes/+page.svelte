@@ -86,7 +86,7 @@
 	{#if data.batches.length === 0}
 		<p class="empty">
 			No batches running.
-			<a class="underline" href={resolve('/batches/new')}>Start a ferment</a>
+			<a class="underline" href={resolve('/batches/new')}>Start a batch</a>
 		</p>
 	{:else}
 		<ul class="space-y-2">

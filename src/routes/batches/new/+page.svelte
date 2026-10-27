@@ -11,18 +11,19 @@
 	);
 </script>
 
-<h1 class="mb-5 text-2xl font-bold">Start a ferment</h1>
+<h1 class="mb-5 text-2xl font-bold">Start a batch</h1>
 
 {#if data.protocols.length === 0}
 	<p class="empty">
 		A batch follows a protocol.
-		<a class="underline" href={resolve('/protocols/import')}>Import one from Paprika</a> first.
+		<a class="underline" href={resolve('/protocols/import')}>Import a recipe from Paprika</a> or
+		<a class="underline" href={resolve('/protocols/new')}>write a protocol</a> first.
 	</p>
 {:else}
 	<BatchForm
-		values={{ protocolId: preselect, startedAt: data.startedAt, phase: 'primary ferment' }}
+		values={{ protocolId: preselect, startedAt: data.startedAt }}
 		protocols={data.protocols}
-		nextNumber={data.nextNumber}
+		nextNumbers={data.nextNumbers}
 		spaces={data.spaces}
 		equipment={data.equipment}
 		error={form?.error}

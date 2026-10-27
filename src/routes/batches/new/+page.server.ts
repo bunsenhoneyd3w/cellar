@@ -6,15 +6,18 @@ import { listSpaces } from '#lib/server/spaces.ts';
 import { listEquipment } from '#lib/server/equipment.ts';
 import { readBatchForm } from '#lib/server/batch-form.ts';
 import { inputFail } from '#lib/server/actions.ts';
+import { STARTABLE_TYPES, isStartableType, type BatchType } from '#lib/enums.ts';
 import { toLocalInput } from '#lib/time.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
 	const db = getDb();
+	const nextNumbers: Partial<Record<BatchType, number>> = {};
+	for (const t of STARTABLE_TYPES) nextNumbers[t] = nextBatchNumber(db, t);
 	return {
-		protocols: listProtocols(db, 'ferment'),
+		protocols: listProtocols(db).filter((p) => isStartableType(p.batchType)),
 		protocolId: url.searchParams.get('protocol'),
-		nextNumber: nextBatchNumber(db, 'ferment'),
+		nextNumbers,
 		spaces: listSpaces(db),
 		equipment: listEquipment(db),
 		startedAt: toLocalInput(null)
