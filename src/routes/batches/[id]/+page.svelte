@@ -5,8 +5,9 @@
 	import TaskRow from '#lib/components/TaskRow.svelte';
 	import UndoBar from '#lib/components/UndoBar.svelte';
 	import { dayNumber, formatDate, formatDateTime } from '#lib/time.ts';
+	import { CONTAMINATION_LABELS } from '#lib/enums.ts';
 	import { bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
-	import { READING_KINDS, kindLabel, readingKind } from '#lib/reading-kinds.ts';
+	import { READING_KINDS, kindLabel } from '#lib/reading-kinds.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -16,23 +17,42 @@
 	const day = $derived(b.startedAt ? dayNumber(b.startedAt, b.endedAt) : null);
 
 	// One chart per reading kind: kinds with a protocol target first, then list order.
+	// Harvest weights are left out; the flushes table shows them (D23).
 	const hasTarget = (kind: string) => !!snap?.body.targets.some((t) => t.kind === kind);
 	const charts = $derived(
-		READING_KINDS.map((k) => k.kind)
+		READING_KINDS.filter((k) => !k.harvest)
+			.map((k) => k.kind)
 			.filter((kind) => data.readings.some((r) => r.kind === kind))
 			.sort((a, c) => Number(hasTarget(c)) - Number(hasTarget(a)))
 			.map((kind) => {
 				const rows = data.readings.filter((r) => r.kind === kind);
+				const targets = snap?.body.targets.filter((t) => t.kind === kind) ?? [];
+				// One band only when the target is the same in every phase; otherwise list them (D25).
+				const single = targets.length === 1 && !targets[0].phase;
 				return {
 					kind,
-					label: readingKind(kind)?.label ?? kind,
+					label: label(kind),
 					unit: rows[0].unit,
 					points: rows,
-					target: snap?.body.targets.find((t) => t.kind === kind)
+					target: single ? targets[0] : undefined,
+					note: single
+						? undefined
+						: targets.map((t) => `${t.phase ?? 'other phases'}: ${formatRange(t)}`).join('; ')
 				};
 			})
 	);
-	const label = (kind: string) => readingKind(kind)?.label ?? kind;
+	const label = (kind: string) => kindLabel(kind, b.batchType);
+	const grow = $derived(b.batchType === 'mushroom');
+	const flushes = $derived(data.flushes.flushes);
+	const events = $derived(
+		data.observations
+			.flatMap((o) => o.contaminations.map((c) => ({ ...c, observedAt: o.observedAt })))
+			.reverse()
+	);
+	const tossed = $derived(!finished && events.at(-1)?.action === 'tossed');
+	const grams = (n: number) => `${Math.round(n * 10) / 10} g`;
+	const contamText = (c: { kind: string; severity: string; action: string }) =>
+		[c.kind, c.severity, c.action].map((v) => CONTAMINATION_LABELS[v] ?? v).join(' · ');
 </script>
 
 <h1 class="text-2xl font-bold">{b.name}</h1>
@@ -46,7 +66,20 @@
 	{/if}
 	{#if b.phase}
 		· {b.phase}{/if}
+	{#if flushes.length}
+		· {flushes.length} flush{flushes.length === 1 ? '' : 'es'}, {grams(data.flushes.totalGrams)}
+	{/if}
 </p>
+
+{#if tossed}
+	<p class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+		The last contamination was tossed.
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a class="underline" href="{resolve('/batches/[id]/finish', { id: b.id })}?status=failed"
+			>Finish this grow as failed</a
+		>
+	</p>
+{/if}
 
 {#if !finished}
 	<a
@@ -104,17 +137,71 @@
 
 {#if b.notes}<p class="mb-6 whitespace-pre-line text-gray-700">{b.notes}</p>{/if}
 
+{#if flushes.length}
+	<section class="mb-6">
+		<h2 class="section-title">Flushes</h2>
+		<table class="card w-full text-sm">
+			<thead class="text-left text-gray-500">
+				<tr>
+					<th class="px-4 py-2 font-normal">Flush</th>
+					<th class="px-2 py-2 font-normal">Picked</th>
+					<th class="px-2 py-2 text-right font-normal">Weight</th>
+					<th class="px-4 py-2 text-right font-normal">Total</th>
+				</tr>
+			</thead>
+			<tbody class="divide-y divide-gray-100 border-t border-gray-100">
+				{#each flushes as f, i (f.flush)}
+					<tr>
+						<td class="px-4 py-2 font-medium">{f.flush}</td>
+						<td class="px-2 py-2">
+							{b.startedAt
+								? `Day ${dayNumber(b.startedAt, f.harvestedAt)}`
+								: formatDate(f.harvestedAt)}
+						</td>
+						<td class="px-2 py-2 text-right">{grams(f.grams)}</td>
+						<td class="px-4 py-2 text-right text-gray-600">
+							{grams(flushes.slice(0, i + 1).reduce((sum, x) => sum + x.grams, 0))}
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+		{#if data.flushes.skipped}
+			<p class="mt-1 text-sm text-gray-500">
+				{data.flushes.skipped} harvest reading{data.flushes.skipped === 1 ? '' : 's'} not in grams left
+				out of the totals.
+			</p>
+		{/if}
+	</section>
+{/if}
+
+{#if events.length}
+	<section class="mb-6">
+		<h2 class="section-title">Contamination</h2>
+		<ul class="card divide-y divide-gray-100 text-sm">
+			{#each events as c (c.id)}
+				<li class="flex justify-between gap-3 px-4 py-2">
+					<span>{contamText(c)}</span>
+					<span class="shrink-0 text-gray-500">
+						{b.startedAt ? `Day ${dayNumber(b.startedAt, c.observedAt)}` : formatDate(c.observedAt)}
+					</span>
+				</li>
+			{/each}
+		</ul>
+	</section>
+{/if}
+
 {#if snap}
 	<details class="card mb-6 px-4 py-3">
 		<summary class="cursor-pointer font-medium">Method as started (v{snap.version})</summary>
 		{#if snap.body.ingredients.length}
-			<h3 class="section-title mt-4">Ingredients</h3>
+			<h3 class="section-title mt-4">{grow ? 'Materials' : 'Ingredients'}</h3>
 			<ul class="list-inside list-disc text-gray-700">
 				{#each snap.body.ingredients as line, i (i)}<li>{line}</li>{/each}
 			</ul>
 		{/if}
 		{#if snap.body.steps.length}
-			<h3 class="section-title mt-4">Steps</h3>
+			<h3 class="section-title mt-4">{grow ? 'Tek steps' : 'Steps'}</h3>
 			<ol class="list-inside list-decimal text-gray-700">
 				{#each snap.body.steps as line, i (i)}<li>{line}</li>{/each}
 			</ol>
@@ -173,7 +260,13 @@
 		<h2 class="section-title">Readings</h2>
 		<div class="space-y-3">
 			{#each charts as c (c.kind)}
-				<ReadingChart label={c.label} unit={c.unit} points={c.points} target={c.target} />
+				<ReadingChart
+					label={c.label}
+					unit={c.unit}
+					points={c.points}
+					target={c.target}
+					note={c.note || undefined}
+				/>
 			{/each}
 		</div>
 	</section>
@@ -195,6 +288,20 @@
 						</span>
 						{#if o.phase}<span>{o.phase}</span>{/if}
 					</p>
+					{#if o.flush || o.contaminations.length}
+						<ul class="mb-2 flex flex-wrap gap-2">
+							{#if o.flush}
+								<li class="rounded-full bg-green-100 px-3 py-1 text-sm text-green-900">
+									Flush {o.flush}
+								</li>
+							{/if}
+							{#each o.contaminations as c (c.id)}
+								<li class="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-900">
+									{contamText(c)}
+								</li>
+							{/each}
+						</ul>
+					{/if}
 					{#if o.note}<p class="mb-2 whitespace-pre-line">{o.note}</p>{/if}
 					{#if o.readings.length}
 						<ul class="mb-2 flex flex-wrap gap-2">
