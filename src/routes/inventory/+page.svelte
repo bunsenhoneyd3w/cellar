@@ -61,7 +61,7 @@
 			href={href(view, data.showGone)}
 			aria-current={data.view === view ? 'page' : undefined}
 			class="btn {data.view === view
-				? 'border-gray-800 bg-gray-800 text-white active:bg-gray-700'
+				? 'border-accent bg-accent text-on-accent active:bg-accent-strong'
 				: ''}">{text}</a
 		>
 	{/each}
@@ -88,7 +88,7 @@
 {/if}
 
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-<a class="block py-3 text-center text-gray-600 underline" href={href(data.view, !data.showGone)}>
+<a class="block py-3 text-center text-ink-muted underline" href={href(data.view, !data.showGone)}>
 	{data.showGone ? 'Hide gone items' : 'Show gone items'}
 </a>
 

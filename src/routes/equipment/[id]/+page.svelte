@@ -98,4 +98,4 @@
 	error={form?.error}
 	submitLabel="Save changes"
 />
-<p class="mt-4 text-xs text-gray-400">{data.item.id}</p>
+<p class="mt-4 text-xs text-ink-faint">{data.item.id}</p>

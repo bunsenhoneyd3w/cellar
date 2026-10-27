@@ -22,7 +22,7 @@
 		<a
 			href="{resolve('/batches')}?show={t.key}"
 			class="btn {data.show === t.key
-				? 'border-gray-800 bg-gray-800 text-white active:bg-gray-700'
+				? 'border-accent bg-accent text-on-accent active:bg-accent-strong'
 				: ''}">{t.label}</a
 		>
 	{/each}
@@ -36,7 +36,7 @@
 			<li>
 				<a href={resolve('/batches/[id]', { id: b.id })} class="card block px-4 py-3">
 					<span class="block font-medium">{b.name}</span>
-					<span class="block text-sm text-gray-500">
+					<span class="block text-sm text-ink-muted">
 						{#if b.status === 'active' && b.startedAt}
 							Day {dayNumber(b.startedAt)}{b.phase ? ` · ${b.phase}` : ''}
 						{:else if b.status === 'planned'}
@@ -50,7 +50,7 @@
 			</li>
 		{/each}
 	</ul>
-	<a class="mt-4 block py-2 text-center text-gray-600 underline" href={resolve('/compare')}
+	<a class="mt-4 block py-2 text-center text-ink-muted underline" href={resolve('/compare')}
 		>Compare batches</a
 	>
 {/if}

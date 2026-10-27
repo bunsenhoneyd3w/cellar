@@ -36,7 +36,7 @@
 <div class="mb-5 flex items-start justify-between gap-3">
 	<div>
 		<h1 class="text-2xl font-bold">Today</h1>
-		<p class="text-gray-600">{longDate}</p>
+		<p class="text-ink-muted">{longDate}</p>
 	</div>
 	<a class="btn shrink-0" href={resolve('/tasks/new')}>Add task</a>
 </div>
@@ -49,7 +49,7 @@
 	<!-- Jars to eat first (D30); the use-by view has the full list. -->
 	<a
 		href="{resolve('/inventory')}?view=use-by"
-		class="card mb-5 block border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
+		class="card mb-5 block border-warn-line bg-warn-bg px-4 py-3 text-warn-ink"
 	>
 		<span class="font-medium">
 			Shelf: {[
@@ -70,7 +70,7 @@
 
 {#if t.overdue.length}
 	<section class="mb-6">
-		<h2 class="section-title text-red-700">Overdue</h2>
+		<h2 class="section-title text-danger-ink">Overdue</h2>
 		<ul class="space-y-2">
 			{#each t.overdue as task (task.id)}<TaskRow {task} from="today" />{/each}
 		</ul>
@@ -119,15 +119,15 @@
 					<a href={resolve('/batches/[id]', { id: b.id })} class="card block px-4 py-3">
 						<span class="flex items-baseline justify-between gap-3">
 							<span class="font-medium">{b.name}</span>
-							<span class="shrink-0 text-sm text-gray-500">
+							<span class="shrink-0 text-sm text-ink-muted">
 								{b.status === 'planned'
 									? `Starts ${formatDate(b.startedAt)}`
 									: `Day ${b.startedAt ? dayNumber(b.startedAt) : 0}`}
 							</span>
 						</span>
-						<span class="block text-sm text-gray-500">
+						<span class="block text-sm text-ink-muted">
 							{b.phase ? `${b.phase} · ` : ''}{lastSeen(b.lastObservedAt)}{#if due}
-								· <span class="font-medium text-gray-900">{plural(due, 'task')} due</span>{/if}
+								· <span class="font-medium text-ink">{plural(due, 'task')} due</span>{/if}
 						</span>
 					</a>
 				</li>

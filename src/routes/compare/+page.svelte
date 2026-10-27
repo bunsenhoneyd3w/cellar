@@ -92,7 +92,7 @@
 <h1 class="mb-1 text-2xl font-bold">Compare</h1>
 
 {#if data.mode === 'types'}
-	<p class="mb-4 text-gray-600">Pick a kind of batch.</p>
+	<p class="mb-4 text-ink-muted">Pick a kind of batch.</p>
 	{#if data.types.length}
 		<div class="grid grid-cols-2 gap-2">
 			{#each data.types as t (t.type)}
@@ -103,7 +103,7 @@
 		<p class="empty">Comparing needs two batches of the same kind.</p>
 	{/if}
 {:else if data.mode === 'pick'}
-	<p class="mb-4 text-gray-600">
+	<p class="mb-4 text-ink-muted">
 		Pick 2 to {MAX_COMPARE}
 		{label(data.type).toLowerCase()} batches. They line up by day since each one started.
 	</p>
@@ -115,12 +115,12 @@
 				<h2 class="section-title mt-4">
 					{same ? 'Same protocol' : `Other ${label(data.type).toLowerCase()} batches`}
 				</h2>
-				<ul class="card divide-y divide-gray-100">
+				<ul class="card divide-y divide-line">
 					{#each group as b (b.id)}
 						{@const full = chosen.length >= MAX_COMPARE && !chosen.includes(b.id)}
 						<li>
 							<label
-								class="flex min-h-14 items-center gap-3 px-4 py-2 {full ? 'text-gray-400' : ''}"
+								class="flex min-h-14 items-center gap-3 px-4 py-2 {full ? 'text-ink-faint' : ''}"
 							>
 								<input
 									type="checkbox"
@@ -128,11 +128,11 @@
 									value={b.id}
 									bind:group={chosen}
 									disabled={full}
-									class="size-6 rounded border-gray-400"
+									class="size-6 rounded border-line-strong"
 								/>
 								<span class="min-w-0 flex-1">
 									<span class="block">{b.name}</span>
-									<span class="block text-sm text-gray-500">
+									<span class="block text-sm text-ink-muted">
 										{#if b.status === 'active' && b.startedAt}
 											Day {dayNumber(b.startedAt)}{b.phase ? ` · ${b.phase}` : ''}
 										{:else if b.status === 'planned'}
@@ -153,7 +153,7 @@
 			<p class="empty mt-4">There is only one {label(data.type).toLowerCase()} batch so far.</p>
 		{/if}
 		<div
-			class="sticky z-10 -mx-4 mt-4 bg-gray-50/95 px-4 py-3"
+			class="sticky z-10 -mx-4 mt-4 bg-paper/95 px-4 py-3"
 			style="bottom: calc(3.5rem + env(safe-area-inset-bottom))"
 		>
 			<button class="btn-primary min-h-14 w-full text-lg" disabled={chosen.length < 2}>
@@ -162,17 +162,17 @@
 		</div>
 	</form>
 {:else if c}
-	<p class="mb-4 text-gray-600">
+	<p class="mb-4 text-ink-muted">
 		{c.batches.length}
 		{label(type).toLowerCase()} batches, lined up by day since each one started.
 	</p>
 	{#if c.leftOut}
-		<p class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+		<p class="mb-4 rounded-lg border border-warn-line bg-warn-bg px-4 py-3 text-warn-ink">
 			{c.leftOut} left out: only {MAX_COMPARE} batches of one kind fit.
 		</p>
 	{/if}
 
-	<ul class="card mb-3 divide-y divide-gray-100">
+	<ul class="card mb-3 divide-y divide-line">
 		{#each styled as b (b.id)}
 			<li>
 				<a href={resolve('/batches/[id]', { id: b.id })} class="flex items-center gap-3 px-4 py-2">
@@ -189,7 +189,7 @@
 					</svg>
 					<span class="min-w-0 flex-1">
 						<span class="block">{b.name}</span>
-						<span class="block text-sm text-gray-500">
+						<span class="block text-sm text-ink-muted">
 							{status(b)}{b.protocol ? ` · ${b.protocol.name} v${b.protocol.version}` : ''}
 						</span>
 					</span>
@@ -217,13 +217,13 @@
 		<div class="card overflow-x-auto">
 			<table class="w-full text-sm">
 				<caption class="sr-only">{caption}</caption>
-				<thead class="text-left text-gray-500">
+				<thead class="text-left text-ink-muted">
 					<tr>
-						<th class="sticky left-0 bg-white px-3 py-2 font-normal">
+						<th class="sticky left-0 bg-card px-3 py-2 font-normal">
 							<span class="sr-only">Item</span>
 						</th>
 						{#each styled as b (b.id)}
-							<th scope="col" class="min-w-28 px-3 py-2 align-bottom font-medium text-gray-800">
+							<th scope="col" class="min-w-28 px-3 py-2 align-bottom font-medium text-ink">
 								<svg viewBox="0 0 24 8" class="mb-1 block h-2 w-6" aria-hidden="true">
 									<line
 										x1="1"
@@ -240,19 +240,19 @@
 						{/each}
 					</tr>
 				</thead>
-				<tbody class="divide-y divide-gray-100 border-t border-gray-100">
+				<tbody class="divide-y divide-line border-t border-line">
 					{#each rows as r (r.label)}
 						<tr>
 							<!-- Row names stay put while three or four batches scroll sideways. -->
 							<th
 								scope="row"
-								class="sticky left-0 bg-white px-3 py-2 text-left align-top font-normal text-gray-500"
+								class="sticky left-0 bg-card px-3 py-2 text-left align-top font-normal text-ink-muted"
 							>
 								{r.label}
 							</th>
 							{#each r.cells as cell, i (i)}
 								<td class="px-3 py-2 align-top whitespace-pre-line">
-									{#if cell}{cell}{:else}<span class="text-gray-400">-</span>{/if}
+									{#if cell}{cell}{:else}<span class="text-ink-faint">-</span>{/if}
 								</td>
 							{/each}
 						</tr>
@@ -277,7 +277,7 @@
 				})),
 				'Day each phase was reached'
 			)}
-			<p class="mt-1 text-sm text-gray-500">
+			<p class="mt-1 text-sm text-ink-muted">
 				The day of the first check-in in each phase; the first phase counts from Day 0. A phase
 				changed only on the edit screen does not show.
 			</p>

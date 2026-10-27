@@ -54,18 +54,18 @@
 	<figcaption class="mb-1 flex items-baseline justify-between">
 		<span class="font-medium">{label}</span>
 		{#if latest}
-			<span class="text-gray-700">{latest.value} {unit === label ? '' : unit}</span>
+			<span class="text-ink">{latest.value} {unit === label ? '' : unit}</span>
 		{/if}
 	</figcaption>
 	<svg viewBox="0 0 {W} {H}" class="h-auto w-full" role="img" aria-label="{label} over time">
 		{#if band}
-			<rect x="0" y={band.top} width={W} height={band.height} class="fill-gray-100" />
+			<rect x="0" y={band.top} width={W} height={band.height} class="fill-sunken" />
 		{/if}
 		{#if points.length > 1}
 			<polyline
 				points={line}
 				fill="none"
-				class="stroke-gray-800"
+				class="stroke-accent"
 				stroke-width="2"
 				stroke-linejoin="round"
 				stroke-linecap="round"
@@ -80,13 +80,13 @@
 					cx={x(times[i])}
 					cy={y(p.value)}
 					r="4"
-					class="fill-gray-800 stroke-white"
+					class="fill-accent stroke-card"
 					stroke-width="2"
 				/>
 			</g>
 		{/each}
 	</svg>
-	<p class="mt-1 flex justify-between text-xs text-gray-500">
+	<p class="mt-1 flex justify-between text-xs text-ink-muted">
 		<span>
 			{points.length} reading{points.length === 1 ? '' : 's'}{points.length > 1
 				? ` · low ${Math.min(...values)}, high ${Math.max(...values)}`
@@ -94,5 +94,5 @@
 		</span>
 		{#if target}<span>Shaded: target range</span>{/if}
 	</p>
-	{#if note}<p class="mt-1 text-xs text-gray-500">{note}</p>{/if}
+	{#if note}<p class="mt-1 text-xs text-ink-muted">{note}</p>{/if}
 </figure>

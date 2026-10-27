@@ -27,11 +27,11 @@
 </script>
 
 {#snippet targetRows(phase: string | null, suffix: string)}
-	<div class="card divide-y divide-gray-200">
+	<div class="card divide-y divide-line">
 		{#each kinds as k (k.kind)}
 			{@const t = target(k.kind, phase)}
 			<div class="grid grid-cols-[1fr_5.5rem_5.5rem] items-center gap-2 px-3 py-2">
-				<span class="text-sm">{k.label} <span class="text-gray-500">({k.unit})</span></span>
+				<span class="text-sm">{k.label} <span class="text-ink-muted">({k.unit})</span></span>
 				<input
 					class="input min-h-10 text-sm"
 					name="min_{k.kind}{suffix}"
@@ -71,7 +71,7 @@
 		<textarea class="input" id="ingredients" name="ingredients" rows="6"
 			>{body?.ingredients.join('\n') ?? ''}</textarea
 		>
-		<p class="mt-1 text-sm text-gray-500">
+		<p class="mt-1 text-sm text-ink-muted">
 			One per line.{words.ingredientsHint ? ` ${words.ingredientsHint}` : ''}
 		</p>
 	</div>
@@ -81,7 +81,7 @@
 		<textarea class="input" id="steps" name="steps" rows="8"
 			>{body?.steps.join('\n') ?? ''}</textarea
 		>
-		<p class="mt-1 text-sm text-gray-500">One per line.</p>
+		<p class="mt-1 text-sm text-ink-muted">One per line.</p>
 	</div>
 
 	{#if preserve}
@@ -114,13 +114,13 @@
 
 	<fieldset>
 		<legend class="label">Target ranges</legend>
-		<p class="mb-2 text-sm text-gray-500">Leave blank for readings you do not track.</p>
+		<p class="mb-2 text-sm text-ink-muted">Leave blank for readings you do not track.</p>
 		{#if phases.length}
 			<p class="mb-1 text-sm font-medium">All phases</p>
 		{/if}
 		{@render targetRows(null, '')}
 		{#if phases.length}
-			<p class="mt-3 mb-2 text-sm text-gray-500">
+			<p class="mt-3 mb-2 text-sm text-ink-muted">
 				A phase's own range wins over the all-phases one while the batch is in that phase.
 			</p>
 			<div class="space-y-2">

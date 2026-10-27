@@ -42,7 +42,7 @@
 <figure class="card px-4 py-3">
 	<figcaption class="mb-1 flex items-baseline justify-between">
 		<span class="font-medium">{label}</span>
-		<span class="text-sm text-gray-500">{unit === label ? '' : unit}</span>
+		<span class="text-sm text-ink-muted">{unit === label ? '' : unit}</span>
 	</figcaption>
 	<svg
 		viewBox="0 0 {W} {H}"
@@ -51,9 +51,9 @@
 		aria-label="{label} by day for {series.map((s) => s.name).join(', ')}"
 	>
 		{#if band}
-			<rect x="0" y={band.top} width={W} height={band.height} class="fill-gray-100" />
+			<rect x="0" y={band.top} width={W} height={band.height} class="fill-sunken" />
 		{/if}
-		<line x1={PAD} x2={W - PAD} y1={H - PAD} y2={H - PAD} class="stroke-gray-200" />
+		<line x1={PAD} x2={W - PAD} y1={H - PAD} y2={H - PAD} class="stroke-line" />
 		{#each series as s, si (si)}
 			{#if s.points.length > 1}
 				<polyline
@@ -78,14 +78,14 @@
 						cy={y(p.value)}
 						r="4"
 						fill={s.color}
-						class="stroke-white"
+						class="stroke-card"
 						stroke-width="2"
 					/>
 				</g>
 			{/each}
 		{/each}
 	</svg>
-	<p class="flex justify-between text-xs text-gray-500">
+	<p class="flex justify-between text-xs text-ink-muted">
 		<span>Day 0</span>
 		<span>Day {Math.round(lastDay)}</span>
 	</p>
@@ -105,18 +105,18 @@
 					/>
 				</svg>
 				<span class="min-w-0 flex-1 truncate">{s.name}</span>
-				<span class="shrink-0 text-gray-700">
+				<span class="shrink-0 text-ink">
 					{#if last}
 						{last.value}{show(unit)}
-						<span class="text-gray-500">day {last.dayNumber}</span>
+						<span class="text-ink-muted">day {last.dayNumber}</span>
 					{:else}
-						<span class="text-gray-500">none</span>
+						<span class="text-ink-muted">none</span>
 					{/if}
 				</span>
 			</li>
 		{/each}
 	</ul>
-	<p class="mt-1 flex justify-between text-xs text-gray-500">
+	<p class="mt-1 flex justify-between text-xs text-ink-muted">
 		<span>
 			{values.length} reading{values.length === 1 ? '' : 's'}{values.length > 1
 				? ` · low ${Math.min(...values)}, high ${Math.max(...values)}`

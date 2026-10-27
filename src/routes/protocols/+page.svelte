@@ -18,12 +18,12 @@
 		No protocols yet. Import a recipe from Paprika, or write a recipe or grow tek.
 	</p>
 {:else}
-	<ul class="card divide-y divide-gray-200">
+	<ul class="card divide-y divide-line">
 		{#each data.protocols as p (p.id)}
 			<li>
 				<a href={resolve('/protocols/[id]', { id: p.id })} class="block px-4 py-3">
 					<span class="block font-medium">{p.name}</span>
-					<span class="block text-sm text-gray-500">
+					<span class="block text-sm text-ink-muted">
 						{label(p.batchType)} · version {p.version}{p.source ? ` · ${p.source}` : ''}
 					</span>
 				</a>

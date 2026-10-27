@@ -7,7 +7,7 @@
 </script>
 
 <h1 class="text-2xl font-bold">Edit item</h1>
-<p class="mb-5 text-gray-600">
+<p class="mb-5 text-ink-muted">
 	{#if data.batch}
 		From <a class="underline" href={resolve('/batches/[id]', { id: data.batch.id })}
 			>{data.batch.name}</a
@@ -35,6 +35,6 @@
 		if (!confirm(`Delete ${data.item.name}?`)) e.preventDefault();
 	}}
 >
-	<button class="w-full py-2 text-sm text-gray-500 underline">Delete item</button>
+	<button class="w-full py-2 text-sm text-ink-muted underline">Delete item</button>
 </form>
-<p class="mt-4 text-xs text-gray-400">{data.item.id}</p>
+<p class="mt-4 text-xs text-ink-faint">{data.item.id}</p>

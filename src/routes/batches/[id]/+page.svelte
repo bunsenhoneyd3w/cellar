@@ -67,7 +67,7 @@
 </script>
 
 <h1 class="text-2xl font-bold">{b.name}</h1>
-<p class="mb-4 text-gray-600">
+<p class="mb-4 text-ink-muted">
 	{#if b.status === 'planned'}
 		Starts {formatDate(b.startedAt)}
 	{:else if finished}
@@ -86,7 +86,7 @@
 </p>
 
 {#if tossed}
-	<p class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+	<p class="mb-4 rounded-lg border border-warn-line bg-warn-bg px-4 py-3 text-warn-ink">
 		The last contamination was tossed.
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a class="underline" href="{resolve('/batches/[id]/finish', { id: b.id })}?status=failed"
@@ -127,43 +127,43 @@
 	</section>
 {/if}
 
-<dl class="card mb-6 divide-y divide-gray-100 text-sm">
+<dl class="card mb-6 divide-y divide-line text-sm">
 	<div class="flex justify-between gap-4 px-4 py-2">
-		<dt class="text-gray-500">Where</dt>
+		<dt class="text-ink-muted">Where</dt>
 		<dd>{data.space?.name ?? 'Not set'}</dd>
 	</div>
 	<div class="flex justify-between gap-4 px-4 py-2">
-		<dt class="text-gray-500">Started</dt>
+		<dt class="text-ink-muted">Started</dt>
 		<dd>{formatDate(b.startedAt)}</dd>
 	</div>
 	{#if data.equipment.length}
 		<div class="flex justify-between gap-4 px-4 py-2">
-			<dt class="text-gray-500">Equipment</dt>
+			<dt class="text-ink-muted">Equipment</dt>
 			<dd class="text-right">{data.equipment.map((e) => e.name).join(', ')}</dd>
 		</div>
 	{/if}
 	{#if snap}
 		<div class="flex justify-between gap-4 px-4 py-2">
-			<dt class="text-gray-500">Protocol</dt>
+			<dt class="text-ink-muted">Protocol</dt>
 			<dd class="text-right">
 				<a class="underline" href={resolve('/protocols/[id]', { id: snap.protocolId })}
 					>{snap.name} v{snap.version}</a
 				>
 				{#if data.latestProtocol && data.latestProtocol.version > snap.version}
-					<span class="block text-gray-500">v{data.latestProtocol.version} exists</span>
+					<span class="block text-ink-muted">v{data.latestProtocol.version} exists</span>
 				{/if}
 			</dd>
 		</div>
 	{/if}
 </dl>
 
-{#if b.notes}<p class="mb-6 whitespace-pre-line text-gray-700">{b.notes}</p>{/if}
+{#if b.notes}<p class="mb-6 whitespace-pre-line text-ink">{b.notes}</p>{/if}
 
 {#if flushes.length}
 	<section class="mb-6">
 		<h2 class="section-title">{titleCase(cut(2))}</h2>
 		<table class="card w-full text-sm">
-			<thead class="text-left text-gray-500">
+			<thead class="text-left text-ink-muted">
 				<tr>
 					<th class="px-4 py-2 font-normal">{titleCase(cut())}</th>
 					<th class="px-2 py-2 font-normal">Picked</th>
@@ -171,7 +171,7 @@
 					<th class="px-4 py-2 text-right font-normal">Total</th>
 				</tr>
 			</thead>
-			<tbody class="divide-y divide-gray-100 border-t border-gray-100">
+			<tbody class="divide-y divide-line border-t border-line">
 				{#each flushes as f, i (f.flush)}
 					<tr>
 						<td class="px-4 py-2 font-medium">{f.flush}</td>
@@ -181,7 +181,7 @@
 								: formatDate(f.harvestedAt)}
 						</td>
 						<td class="px-2 py-2 text-right">{grams(f.grams)}</td>
-						<td class="px-4 py-2 text-right text-gray-600">
+						<td class="px-4 py-2 text-right text-ink-muted">
 							{grams(flushes.slice(0, i + 1).reduce((sum, x) => sum + x.grams, 0))}
 						</td>
 					</tr>
@@ -189,7 +189,7 @@
 			</tbody>
 		</table>
 		{#if data.flushes.skipped}
-			<p class="mt-1 text-sm text-gray-500">
+			<p class="mt-1 text-sm text-ink-muted">
 				{data.flushes.skipped} harvest reading{data.flushes.skipped === 1 ? '' : 's'} not in grams left
 				out of the totals.
 			</p>
@@ -200,11 +200,11 @@
 {#if events.length}
 	<section class="mb-6">
 		<h2 class="section-title">Contamination</h2>
-		<ul class="card divide-y divide-gray-100 text-sm">
+		<ul class="card divide-y divide-line text-sm">
 			{#each events as c (c.id)}
 				<li class="flex justify-between gap-3 px-4 py-2">
 					<span>{contamText(c)}</span>
-					<span class="shrink-0 text-gray-500">
+					<span class="shrink-0 text-ink-muted">
 						{b.startedAt ? `Day ${dayNumber(b.startedAt, c.observedAt)}` : formatDate(c.observedAt)}
 					</span>
 				</li>
@@ -221,19 +221,19 @@
 		{/if}
 		{#if snap.body.ingredients.length}
 			<h3 class="section-title mt-4">{words.ingredients}</h3>
-			<ul class="list-inside list-disc text-gray-700">
+			<ul class="list-inside list-disc text-ink">
 				{#each snap.body.ingredients as line, i (i)}<li>{line}</li>{/each}
 			</ul>
 		{/if}
 		{#if snap.body.steps.length}
 			<h3 class="section-title mt-4">{words.steps}</h3>
-			<ol class="list-inside list-decimal text-gray-700">
+			<ol class="list-inside list-decimal text-ink">
 				{#each snap.body.steps as line, i (i)}<li>{line}</li>{/each}
 			</ol>
 		{/if}
 		{#if bodyTasks(snap.body).length}
 			<h3 class="section-title mt-4">Tasks</h3>
-			<ul class="text-gray-700">
+			<ul class="text-ink">
 				{#each bodyTasks(snap.body) as t, i (i)}
 					<li>{t.title}: {formatTemplate(t)}</li>
 				{/each}
@@ -241,7 +241,7 @@
 		{/if}
 		{#if snap.body.targets.length}
 			<h3 class="section-title mt-4">Targets</h3>
-			<ul class="text-gray-700">
+			<ul class="text-ink">
 				{#each snap.body.targets as t (`${t.kind}:${t.phase ?? ''}`)}
 					<li>
 						{kindLabel(t.kind, b.batchType)}{t.phase ? ` (${t.phase})` : ''}: {formatRange(t)}
@@ -260,20 +260,20 @@
 				<span class="font-medium">{b.status === 'done' ? 'Done' : 'Failed'}</span>
 				{#if data.outcome?.rating}
 					<span aria-label="Rated {data.outcome.rating} of 5">
-						{'★'.repeat(data.outcome.rating)}<span class="text-gray-300"
+						{'★'.repeat(data.outcome.rating)}<span class="text-ink-faint"
 							>{'★'.repeat(5 - data.outcome.rating)}</span
 						>
 					</span>
 				{/if}
 			</p>
 			{#if data.outcome?.yieldValue != null}
-				<p class="mb-2 text-gray-700">Yield: {data.outcome.yieldValue} {data.outcome.yieldUnit}</p>
+				<p class="mb-2 text-ink">Yield: {data.outcome.yieldValue} {data.outcome.yieldUnit}</p>
 			{/if}
 			{#if data.outcome?.summary}
 				<p class="mb-2 whitespace-pre-line">{data.outcome.summary}</p>
 			{/if}
 			{#if data.outcome?.wouldChange}
-				<p class="text-sm text-gray-500">Next time</p>
+				<p class="text-sm text-ink-muted">Next time</p>
 				<p class="whitespace-pre-line">{data.outcome.wouldChange}</p>
 			{/if}
 		</div>
@@ -285,7 +285,7 @@
 	<section class="mb-6">
 		<h2 class="section-title">On the shelf</h2>
 		{#if data.shelfItems.length}
-			<ul class="card mb-2 divide-y divide-gray-100">
+			<ul class="card mb-2 divide-y divide-line">
 				{#each data.shelfItems as item (item.id)}
 					<li>
 						<a
@@ -294,9 +294,9 @@
 						>
 							<span>
 								{item.name}
-								<span class="block text-sm text-gray-500">{item.spacePath ?? 'No shelf'}</span>
+								<span class="block text-sm text-ink-muted">{item.spacePath ?? 'No shelf'}</span>
 							</span>
-							<span class="shrink-0 text-right text-gray-700">
+							<span class="shrink-0 text-right text-ink">
 								{item.status === 'gone' ? 'Gone' : formatCount(item.quantity, item.unit)}
 							</span>
 						</a>
@@ -339,7 +339,7 @@
 		<ol class="space-y-3">
 			{#each data.observations as o (o.id)}
 				<li class="card px-4 py-3">
-					<p class="mb-1 flex justify-between text-sm text-gray-500">
+					<p class="mb-1 flex justify-between text-sm text-ink-muted">
 						<span>
 							{b.startedAt ? `Day ${dayNumber(b.startedAt, o.observedAt)} · ` : ''}{formatDateTime(
 								o.observedAt
@@ -350,13 +350,13 @@
 					{#if o.flush || o.contaminations.length}
 						<ul class="mb-2 flex flex-wrap gap-2">
 							{#if o.flush}
-								<li class="rounded-full bg-green-100 px-3 py-1 text-sm text-green-900">
+								<li class="rounded-full bg-ok-bg px-3 py-1 text-sm text-ok-ink">
 									{titleCase(cut())}
 									{o.flush}
 								</li>
 							{/if}
 							{#each o.contaminations as c (c.id)}
-								<li class="rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-900">
+								<li class="rounded-full bg-warn-bg px-3 py-1 text-sm text-warn-ink">
 									{contamText(c)}
 								</li>
 							{/each}
@@ -366,7 +366,7 @@
 					{#if o.readings.length}
 						<ul class="mb-2 flex flex-wrap gap-2">
 							{#each o.readings as r (r.id)}
-								<li class="rounded-full bg-gray-100 px-3 py-1 text-sm">
+								<li class="rounded-full bg-sunken px-3 py-1 text-sm">
 									{label(r.kind)} <strong>{r.value}</strong>
 									{r.unit === label(r.kind) ? '' : r.unit}
 								</li>
@@ -400,7 +400,7 @@
 						}}
 					>
 						<input type="hidden" name="observationId" value={o.id} />
-						<button class="text-sm text-gray-500 underline">Delete</button>
+						<button class="text-sm text-ink-muted underline">Delete</button>
 					</form>
 				</li>
 			{/each}
@@ -416,7 +416,7 @@
 </div>
 {#if finished}
 	<form method="POST" action="?/reopen" use:enhance class="mt-3">
-		<button class="w-full py-2 text-sm text-gray-500 underline">Reopen this batch</button>
+		<button class="w-full py-2 text-sm text-ink-muted underline">Reopen this batch</button>
 	</form>
 {/if}
 

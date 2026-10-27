@@ -58,7 +58,7 @@
 			rows="4"
 			placeholder="capacity_gal: 1&#10;material: stoneware">{values.specsText ?? ''}</textarea
 		>
-		<p class="mt-1 text-sm text-gray-500">One per line, as name: value.</p>
+		<p class="mt-1 text-sm text-ink-muted">One per line, as name: value.</p>
 	</div>
 
 	<div>

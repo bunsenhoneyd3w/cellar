@@ -132,7 +132,7 @@
 	{#if equipment.length}
 		<fieldset>
 			<legend class="label">Equipment</legend>
-			<div class="card divide-y divide-gray-100">
+			<div class="card divide-y divide-line">
 				{#each equipment as e (e.id)}
 					<label class="flex min-h-12 items-center gap-3 px-4">
 						<input

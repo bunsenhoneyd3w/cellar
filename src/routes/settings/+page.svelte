@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import type { PageProps } from './$types';
 
@@ -17,14 +18,48 @@
 			<code>-shm</code> next to it as well.
 		</p>
 		<div>
-			<p class="text-gray-500">Database file</p>
+			<p class="text-ink-muted">Database file</p>
 			<p class="font-mono break-all">{data.dbFile}</p>
 		</div>
 		<div>
-			<p class="text-gray-500">Photos folder</p>
+			<p class="text-ink-muted">Photos folder</p>
 			<p class="font-mono break-all">{data.photosDir}</p>
 		</div>
 	</div>
+</section>
+
+<section class="mb-6">
+	<h2 class="section-title">Look</h2>
+	<form
+		method="POST"
+		action="?/theme"
+		use:enhance={({ formData }) => {
+			const theme = String(formData.get('theme') ?? '');
+			return async ({ update }) => {
+				await update();
+				// The server sets this on the next full load; set it now so the change shows at once.
+				if (theme) document.documentElement.dataset.theme = theme;
+				else delete document.documentElement.dataset.theme;
+			};
+		}}
+		class="card px-4 py-3"
+	>
+		<p class="mb-3 text-sm text-ink-muted">
+			Light or dark on this phone. Auto follows the phone's setting.
+		</p>
+		<div class="grid grid-cols-3 gap-2">
+			{#each [{ value: '', label: 'Auto' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }] as t (t.value)}
+				<button
+					name="theme"
+					value={t.value}
+					class="btn px-2 {(data.theme ?? '') === t.value
+						? 'border-accent bg-accent text-on-accent'
+						: ''}"
+					aria-pressed={(data.theme ?? '') === t.value}>{t.label}</button
+				>
+			{/each}
+		</div>
+	</form>
 </section>
 
 <section class="mb-6">
@@ -39,7 +74,7 @@
 				<code>.env.example</code>) and restart Cellar.
 			</p>
 		{/if}
-		<p class="text-gray-500">
+		<p class="text-ink-muted">
 			A photo is sent to Anthropic only when you use Add from photo. Check-in photos never leave the
 			house. Each photo costs a few cents on the Anthropic account.
 		</p>
@@ -52,12 +87,12 @@
 	<a class="btn-primary mb-3 w-full" href={exportUrl('all.json')} download>
 		Everything as one JSON file
 	</a>
-	<ul class="card divide-y divide-gray-100">
+	<ul class="card divide-y divide-line">
 		{#each data.tables as t (t.name)}
 			<li class="flex items-center gap-2 px-4 py-2">
 				<span class="flex-1">
 					<span class="block font-mono text-sm">{t.name}</span>
-					<span class="block text-xs text-gray-500">{t.count} row{t.count === 1 ? '' : 's'}</span>
+					<span class="block text-xs text-ink-muted">{t.count} row{t.count === 1 ? '' : 's'}</span>
 				</span>
 				<a class="btn min-h-10 px-3 text-sm" href={exportUrl(`${t.name}.csv`)} download>CSV</a>
 				<a class="btn min-h-10 px-3 text-sm" href={exportUrl(`${t.name}.json`)} download>JSON</a>

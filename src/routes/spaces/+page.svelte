@@ -16,7 +16,7 @@
 		No spaces yet. Start with the room, then add shelves and containers inside it.
 	</p>
 {:else}
-	<ul class="card divide-y divide-gray-200">
+	<ul class="card divide-y divide-line">
 		{#each data.spaces as s (s.id)}
 			<li>
 				<a
@@ -25,7 +25,7 @@
 					style="padding-left: {1 + s.depth * 1.25}rem"
 				>
 					<span class="font-medium">{s.name}</span>
-					<span class="text-sm text-gray-500">{label(s.kind)}</span>
+					<span class="text-sm text-ink-muted">{label(s.kind)}</span>
 				</a>
 			</li>
 		{/each}

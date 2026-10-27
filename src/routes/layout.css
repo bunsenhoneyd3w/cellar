@@ -1,31 +1,172 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 
+/* The Root cellar look (D49): warm paper, earthy ink, an olive accent.
+   Every screen uses these named colors, never raw Tailwind grays, so dark
+   mode (D50) is one set of values below. */
+@theme {
+	--font-serif: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif;
+
+	--color-paper: #f4efe6;
+	--color-card: #fffdf8;
+	--color-sunken: #ebe4d7;
+	--color-ink: #2b2620;
+	--color-ink-muted: #6b6052;
+	--color-ink-faint: #998d7b;
+	--color-line: #e2d8c6;
+	--color-line-strong: #c9bba2;
+
+	--color-accent: #4f6b3a;
+	--color-accent-strong: #3e5530;
+	--color-accent-soft: #e2ead6;
+	--color-on-accent: #fffdf8;
+
+	--color-warn: #b7791f;
+	--color-warn-bg: #f6e7c8;
+	--color-warn-ink: #6e4708;
+	--color-warn-line: #e6c98f;
+
+	--color-danger-bg: #f7e1dc;
+	--color-danger-ink: #8a2a1a;
+	--color-danger-line: #e9b8ac;
+
+	--color-ok-bg: #e1ecd5;
+	--color-ok-ink: #33501f;
+
+	/* Comparison lines, checked with the dataviz validator on the card color.
+	   Two light slots sit under 3:1, so every chart keeps dashes and a legend. */
+	--color-series-1: #2a78d6;
+	--color-series-2: #eb6834;
+	--color-series-3: #1baf7a;
+	--color-series-4: #eda100;
+}
+
+/* Dark values apply when the phone is set to dark, unless Settings forces
+   light, and always when Settings forces dark. The theme cookie sets
+   data-theme on <html>. CSS cannot share one block between a media query
+   and an attribute, so the two blocks below must stay identical. */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		color-scheme: dark;
+		--color-paper: #1c1915;
+		--color-card: #26221d;
+		--color-sunken: #2f2a24;
+		--color-ink: #ede6da;
+		--color-ink-muted: #ada290;
+		--color-ink-faint: #82786a;
+		--color-line: #3a342c;
+		--color-line-strong: #514939;
+
+		--color-accent: #a9c08f;
+		--color-accent-strong: #bfd2a8;
+		--color-accent-soft: #2f3826;
+		--color-on-accent: #1c1915;
+
+		--color-warn: #e0a93e;
+		--color-warn-bg: #45330f;
+		--color-warn-ink: #f3d69b;
+		--color-warn-line: #6b5119;
+
+		--color-danger-bg: #4a221b;
+		--color-danger-ink: #f2b8aa;
+		--color-danger-line: #6e3428;
+
+		--color-ok-bg: #26351c;
+		--color-ok-ink: #c6ddaa;
+
+		--color-series-1: #3987e5;
+		--color-series-2: #d95926;
+		--color-series-3: #199e70;
+		--color-series-4: #c98500;
+	}
+}
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	--color-paper: #1c1915;
+	--color-card: #26221d;
+	--color-sunken: #2f2a24;
+	--color-ink: #ede6da;
+	--color-ink-muted: #ada290;
+	--color-ink-faint: #82786a;
+	--color-line: #3a342c;
+	--color-line-strong: #514939;
+
+	--color-accent: #a9c08f;
+	--color-accent-strong: #bfd2a8;
+	--color-accent-soft: #2f3826;
+	--color-on-accent: #1c1915;
+
+	--color-warn: #e0a93e;
+	--color-warn-bg: #45330f;
+	--color-warn-ink: #f3d69b;
+	--color-warn-line: #6b5119;
+
+	--color-danger-bg: #4a221b;
+	--color-danger-ink: #f2b8aa;
+	--color-danger-line: #6e3428;
+
+	--color-ok-bg: #26351c;
+	--color-ok-ink: #c6ddaa;
+
+	--color-series-1: #3987e5;
+	--color-series-2: #d95926;
+	--color-series-3: #199e70;
+	--color-series-4: #c98500;
+}
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+
+/* `dark:` follows the same rule as the colors above. */
+@custom-variant dark {
+	@media (prefers-color-scheme: dark) {
+		&:where(:root:not([data-theme='light']) *) {
+			@slot;
+		}
+	}
+	&:where(:root[data-theme='dark'] *) {
+		@slot;
+	}
+}
+
+@layer base {
+	body {
+		@apply bg-paper text-ink;
+	}
+	h1,
+	h2.title {
+		font-family: var(--font-serif);
+	}
+}
+
 /* A handful of shared building blocks so every screen looks the same.
    Touch targets are at least 48 px tall for gloved or wet hands. */
 @layer components {
 	.label {
-		@apply mb-1 block text-sm font-medium text-gray-700;
+		@apply mb-1 block text-sm font-medium text-ink;
 	}
 	.input {
-		@apply block min-h-12 w-full rounded-lg border-gray-300 bg-white text-base shadow-sm focus:border-gray-800 focus:ring-gray-800;
+		@apply block min-h-12 w-full rounded-lg border-line-strong bg-card text-base text-ink shadow-sm placeholder:text-ink-faint focus:border-accent focus:ring-accent;
 	}
 	.btn {
-		@apply inline-flex min-h-12 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-base font-medium text-gray-800 active:bg-gray-100;
+		@apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-line-strong bg-card px-4 text-base font-medium text-ink active:bg-sunken;
 	}
 	.btn-primary {
-		@apply inline-flex min-h-12 items-center justify-center rounded-lg bg-gray-800 px-4 text-base font-semibold text-white active:bg-gray-700;
+		@apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-base font-semibold text-on-accent active:bg-accent-strong;
 	}
 	.card {
-		@apply rounded-lg border border-gray-200 bg-white;
+		@apply rounded-xl border border-line bg-card;
 	}
 	.section-title {
-		@apply mb-2 text-sm font-semibold tracking-wide text-gray-500 uppercase;
+		@apply mb-2 text-sm font-semibold tracking-wide text-ink-muted;
 	}
 	.empty {
-		@apply rounded-lg border border-dashed border-gray-300 bg-white px-4 py-6 text-center text-gray-500;
+		@apply rounded-xl border border-dashed border-line-strong bg-card px-4 py-6 text-center text-ink-muted;
 	}
 	.error {
-		@apply mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800;
+		@apply mb-4 rounded-lg border border-danger-line bg-danger-bg px-4 py-3 text-danger-ink;
+	}
+	.notice {
+		@apply rounded-lg border border-warn-line bg-warn-bg px-4 py-3 text-warn-ink;
 	}
 }

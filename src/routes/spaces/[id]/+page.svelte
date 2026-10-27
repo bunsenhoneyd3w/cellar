@@ -12,7 +12,7 @@
 {#if data.items.length}
 	<section class="mb-6">
 		<h2 class="section-title">On this shelf</h2>
-		<ul class="card divide-y divide-gray-100">
+		<ul class="card divide-y divide-line">
 			{#each data.items as item (item.id)}
 				<li>
 					<a
@@ -20,7 +20,7 @@
 						class="flex justify-between gap-3 px-4 py-2"
 					>
 						<span>{item.name}</span>
-						<span class="shrink-0 text-gray-600">{formatCount(item.quantity, item.unit)}</span>
+						<span class="shrink-0 text-ink-muted">{formatCount(item.quantity, item.unit)}</span>
 					</a>
 				</li>
 			{/each}
@@ -33,4 +33,4 @@
 	error={form?.error}
 	submitLabel="Save changes"
 />
-<p class="mt-4 text-xs text-gray-400">{data.space.id}</p>
+<p class="mt-4 text-xs text-ink-faint">{data.space.id}</p>

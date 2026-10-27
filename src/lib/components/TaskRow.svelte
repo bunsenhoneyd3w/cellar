@@ -20,9 +20,9 @@
 	<div class="min-w-0 flex-1">
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a href={editHref} class="block py-1 font-medium">{task.title}</a>
-		<p class="text-sm text-gray-500">
+		<p class="text-sm text-ink-muted">
 			{#if task.dueAt}
-				<span class={overdue ? 'font-medium text-red-700' : ''}>
+				<span class={overdue ? 'font-medium text-danger-ink' : ''}>
 					{formatDueDate(task.dueAt, today)}
 				</span>
 			{/if}
@@ -51,7 +51,7 @@
 	>
 		<input type="hidden" name="taskId" value={task.id} />
 		<button
-			class="min-h-14 min-w-20 rounded-full border-2 border-gray-800 px-4 text-base font-semibold text-gray-900 active:bg-gray-800 active:text-white disabled:opacity-50"
+			class="min-h-14 min-w-20 rounded-full border-2 border-accent px-4 text-base font-semibold text-ink active:bg-accent active:text-on-accent disabled:opacity-50"
 			disabled={pending}
 			aria-label="Mark {task.title} done"
 		>

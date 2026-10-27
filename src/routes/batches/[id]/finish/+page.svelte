@@ -15,12 +15,12 @@
 </script>
 
 <h1 class="text-2xl font-bold">{editing ? 'Edit outcome' : 'Finish batch'}</h1>
-<p class="mb-5 text-gray-600">{data.batch.name}</p>
+<p class="mb-5 text-ink-muted">{data.batch.name}</p>
 
 {#if form?.error}<p class="error">{form.error}</p>{/if}
 
 {#if !editing && data.openTasks.length}
-	<p class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+	<p class="mb-5 rounded-lg border border-warn-line bg-warn-bg px-4 py-3 text-warn-ink">
 		Still open on this batch: {data.openTasks.join(', ')}. Finishing hides
 		{data.openTasks.length === 1 ? 'it' : 'them'}, so tick
 		{data.openTasks.length === 1 ? 'it' : 'them'} off first or finish later.
@@ -33,7 +33,7 @@
 		<div class="grid grid-cols-2 gap-3">
 			{#each [['done', 'Done'], ['failed', 'Failed']] as [value, text] (value)}
 				<label
-					class="btn cursor-pointer has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
+					class="btn cursor-pointer has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent"
 				>
 					<input class="sr-only" type="radio" name="status" {value} bind:group={status} />
 					{text}
@@ -79,7 +79,7 @@
 		</div>
 	</div>
 	{#if data.suggested}
-		<p class="-mt-3 text-sm text-gray-500">
+		<p class="-mt-3 text-sm text-ink-muted">
 			Filled in from {data.flushCount}
 			{data.flushWord}. Change it if you weighed more.
 		</p>
@@ -89,7 +89,7 @@
 		<!-- Jars go on the shelf in the same step (D29); rows left without a count are skipped. -->
 		<details class="card px-3 py-2" open={data.preserve}>
 			<summary class="min-h-10 cursor-pointer py-2 font-medium">Add to shelf</summary>
-			<p class="mb-3 text-sm text-gray-500">
+			<p class="mb-3 text-sm text-ink-muted">
 				One row per jar size or shelf. Leave the count blank to skip a row.
 			</p>
 			<div class="pb-2"><ShelfRowsField rows={data.shelfRows} spaces={data.spaces} /></div>
@@ -101,14 +101,14 @@
 		<div class="grid grid-cols-5 gap-2">
 			{#each [1, 2, 3, 4, 5] as n (n)}
 				<label
-					class="btn cursor-pointer px-0 text-lg has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
+					class="btn cursor-pointer px-0 text-lg has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent"
 				>
 					<input class="sr-only" type="radio" name="rating" value={n} checked={o?.rating === n} />
 					{n}
 				</label>
 			{/each}
 		</div>
-		<p class="mt-1 text-sm text-gray-500">1 is poor, 5 is make it again exactly.</p>
+		<p class="mt-1 text-sm text-ink-muted">1 is poor, 5 is make it again exactly.</p>
 	</fieldset>
 
 	<div>

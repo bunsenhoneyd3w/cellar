@@ -75,7 +75,7 @@
 	};
 </script>
 
-<p class="text-sm text-gray-500">
+<p class="text-sm text-ink-muted">
 	Day {data.batch.startedAt ? dayNumber(data.batch.startedAt) : 0}
 </p>
 <h1 class="mb-4 text-xl font-bold">{data.batch.name}</h1>
@@ -84,11 +84,11 @@
 
 {#snippet choices(name: string, values: readonly string[], cols: string, legend: string)}
 	<fieldset>
-		<legend class="mb-1 text-sm text-gray-600">{legend}</legend>
+		<legend class="mb-1 text-sm text-ink-muted">{legend}</legend>
 		<div class="grid {cols} gap-2">
 			{#each values as v (v)}
 				<label
-					class="btn min-h-12 cursor-pointer px-2 text-sm has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
+					class="btn min-h-12 cursor-pointer px-2 text-sm has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent"
 				>
 					<input class="sr-only" type="radio" {name} value={v} />
 					{CONTAMINATION_LABELS[v] ?? v}
@@ -102,20 +102,20 @@
 	{#if data.dueTasks.length}
 		<section>
 			<h2 class="section-title">Tasks due</h2>
-			<div class="card divide-y divide-gray-100">
+			<div class="card divide-y divide-line">
 				{#each data.dueTasks as t (t.id)}
 					<label class="flex min-h-14 cursor-pointer items-center gap-4 px-4 py-2">
 						<input type="checkbox" name="taskId" value={t.id} class="size-7 rounded" />
 						<span class="flex-1">
 							<span class="block">{t.title}</span>
-							<span class="block text-xs text-gray-500">
+							<span class="block text-xs text-ink-muted">
 								{formatDueDate(t.dueAt)}{t.recurrence ? ` · ${formatRecurrence(t.recurrence)}` : ''}
 							</span>
 						</span>
 					</label>
 				{/each}
 			</div>
-			<p class="mt-1 text-sm text-gray-500">Tick what you did. Ticking alone is enough to save.</p>
+			<p class="mt-1 text-sm text-ink-muted">Tick what you did. Ticking alone is enough to save.</p>
 		</section>
 	{/if}
 
@@ -177,7 +177,7 @@
 		<section>
 			<h2 class="section-title">Harvest</h2>
 			{#if harvestOpen}
-				<div class="card divide-y divide-gray-100">
+				<div class="card divide-y divide-line">
 					<label class="flex min-h-14 items-center gap-3 px-4 py-2">
 						<span class="flex-1">{data.harvest.label}</span>
 						<input
@@ -188,12 +188,12 @@
 							min="0"
 							inputmode="decimal"
 						/>
-						<span class="w-10 text-sm text-gray-500">{data.harvest.unit}</span>
+						<span class="w-10 text-sm text-ink-muted">{data.harvest.unit}</span>
 					</label>
 					<div class="flex min-h-14 items-center gap-3 px-4 py-2">
 						<span class="flex-1">
 							<span class="block">{label(word)}</span>
-							<span class="block text-xs text-gray-500">
+							<span class="block text-xs text-ink-muted">
 								{#if data.lastFlush}
 									Last harvest: {word}
 									{data.lastFlush.flush}, {formatDueDate(localDate(data.lastFlush.harvestedAt))}
@@ -221,7 +221,7 @@
 						<input type="hidden" name="flush" value={flush} />
 					</div>
 				</div>
-				<p class="mt-1 text-sm text-gray-500">
+				<p class="mt-1 text-sm text-ink-muted">
 					{flush === maxFlush && data.lastFlush
 						? `A new ${word}. Tap − if this finishes the last one.`
 						: 'Weigh the whole harvest, in grams.'}
@@ -236,13 +236,13 @@
 
 	<section>
 		<h2 class="section-title">Readings</h2>
-		<div class="card divide-y divide-gray-100">
+		<div class="card divide-y divide-line">
 			{#each data.kinds as k (k.kind)}
 				{@const t = target(k.kind)}
 				<label class="flex min-h-14 items-center gap-3 px-4 py-2">
 					<span class="flex-1">
 						<span class="block">{k.label}</span>
-						<span class="block text-xs text-gray-500">
+						<span class="block text-xs text-ink-muted">
 							{#if t}Target {formatRange(t)}{/if}
 							{#if t && data.last[k.kind] !== undefined}
 								·
@@ -252,7 +252,7 @@
 					</span>
 					<input
 						class="input w-28 text-right text-lg {outOfRange(k.kind)
-							? 'border-amber-500 bg-amber-50'
+							? 'border-warn bg-warn-bg'
 							: ''}"
 						name="r_{k.kind}"
 						type="number"
@@ -261,7 +261,7 @@
 						enterkeyhint="next"
 						bind:value={values[k.kind]}
 					/>
-					<span class="w-10 text-sm text-gray-500">{k.unit}</span>
+					<span class="w-10 text-sm text-ink-muted">{k.unit}</span>
 				</label>
 			{/each}
 		</div>
@@ -298,7 +298,7 @@
 				>{contamKeys.length ? 'Add another' : 'Log contamination'}</button
 			>
 			{#if contamKeys.length}
-				<p class="mt-1 text-sm text-gray-500">
+				<p class="mt-1 text-sm text-ink-muted">
 					Add a close-up photo above; it stays with this check-in.
 				</p>
 			{/if}
@@ -330,12 +330,12 @@
 
 	<!-- Left empty, the server stamps the moment Save is pressed. -->
 	<details ontoggle={(e) => (observedAt ||= e.currentTarget.open ? toLocalInput(null) : '')}>
-		<summary class="cursor-pointer py-2 text-gray-600">Logged at save time. Change it</summary>
+		<summary class="cursor-pointer py-2 text-ink-muted">Logged at save time. Change it</summary>
 		<input class="input mt-2" name="observedAt" type="datetime-local" bind:value={observedAt} />
 	</details>
 
 	<div
-		class="sticky z-10 -mx-4 bg-gray-50/95 px-4 py-3"
+		class="sticky z-10 -mx-4 bg-paper/95 px-4 py-3"
 		style="bottom: calc(3.5rem + env(safe-area-inset-bottom))"
 	>
 		<button class="btn-primary min-h-14 w-full text-lg" disabled={saving}>

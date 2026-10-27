@@ -17,7 +17,7 @@
 			{p.method ? PRESERVE_METHOD_LABELS[p.method] : 'Method not set'}
 		</p>
 		{#if p.headspaceIn !== null || body.shelfLifeMonths}
-			<p class="text-gray-700">
+			<p class="text-ink">
 				{#if p.headspaceIn !== null}Headspace {formatHeadspace(p.headspaceIn)}.{/if}
 				{#if body.shelfLifeMonths}Shelf life {body.shelfLifeMonths} months.{/if}
 			</p>
@@ -25,7 +25,7 @@
 		{#if p.jars.length}
 			<table class="mt-2 w-full text-lg">
 				{#if timed}
-					<thead class="text-left text-sm text-gray-500">
+					<thead class="text-left text-sm text-ink-muted">
 						<tr>
 							<th class="py-1 font-normal">Jar</th>
 							<th class="py-1 text-right font-normal">Minutes</th>
@@ -33,7 +33,7 @@
 						</tr>
 					</thead>
 				{/if}
-				<tbody class="divide-y divide-gray-100">
+				<tbody class="divide-y divide-line">
 					{#each p.jars as j, i (i)}
 						<tr>
 							<td class="py-1">{j.size}</td>

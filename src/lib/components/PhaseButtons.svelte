@@ -10,7 +10,7 @@
 <div class="grid grid-cols-2 gap-2">
 	{#each phases as ph (ph)}
 		<label
-			class="btn min-h-12 cursor-pointer px-2 has-checked:border-gray-800 has-checked:bg-gray-800 has-checked:text-white"
+			class="btn min-h-12 cursor-pointer px-2 has-checked:border-accent has-checked:bg-accent has-checked:text-on-accent"
 		>
 			<input class="sr-only" type="radio" {name} value={ph} bind:group={value} />
 			{sentence(ph)}
