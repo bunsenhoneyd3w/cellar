@@ -80,8 +80,8 @@
 	</div>
 	{#if data.suggested}
 		<p class="-mt-3 text-sm text-gray-500">
-			Filled in from {data.flushCount} flush{data.flushCount === 1 ? '' : 'es'}. Change it if you
-			weighed more.
+			Filled in from {data.flushCount}
+			{data.flushWord}. Change it if you weighed more.
 		</p>
 	{/if}
 

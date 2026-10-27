@@ -8,6 +8,7 @@ import { listSpaces } from '#lib/server/spaces.ts';
 import { listOpenTasks } from '#lib/server/tasks.ts';
 import { defaultUseBy, shelvesFirst } from '#lib/shelf.ts';
 import { bodyProcessing } from '#lib/protocol-body.ts';
+import { harvestWord } from '#lib/enums.ts';
 import { num, oneOf, str } from '#lib/server/form.ts';
 import { inputFail } from '#lib/server/actions.ts';
 import { fromLocalInput, localDate, toLocalInput } from '#lib/time.ts';
@@ -24,9 +25,10 @@ export const load: PageServerLoad = ({ params, url }) => {
 		batch: detail.batch,
 		outcome: detail.outcome,
 		endedAt: toLocalInput(detail.batch.endedAt),
-		// A grow's yield starts as the total of its flushes (D23); it can still be changed.
+		// A grow's or tower's yield starts as the total of its harvests (D23, D36); it can still be changed.
 		suggested: detail.outcome?.yieldValue == null ? suggestedYield(detail.flushes) : null,
 		flushCount: detail.flushes.flushes.length,
+		flushWord: harvestWord(detail.batch.batchType, detail.flushes.flushes.length),
 		failed: url.searchParams.get('status') === 'failed'
 	};
 };

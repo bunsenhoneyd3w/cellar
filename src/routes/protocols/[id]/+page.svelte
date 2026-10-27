@@ -4,13 +4,19 @@
 	import { label } from '#lib/enums.ts';
 	import { kindLabel } from '#lib/reading-kinds.ts';
 	import ProcessingCard from '#lib/components/ProcessingCard.svelte';
-	import { bodyProcessing, bodyTasks, formatRange, formatTemplate } from '#lib/protocol-body.ts';
+	import {
+		bodyProcessing,
+		bodyTasks,
+		bodyWords,
+		formatRange,
+		formatTemplate
+	} from '#lib/protocol-body.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const p = $derived(data.protocol);
 	const body = $derived(p.bodyJson);
-	const grow = $derived(p.batchType === 'mushroom');
+	const words = $derived(bodyWords(p.batchType));
 </script>
 
 <h1 class="text-2xl font-bold">{p.name}</h1>
@@ -51,7 +57,7 @@
 {/if}
 
 <section class="mb-6">
-	<h2 class="section-title">{grow ? 'Materials' : 'Ingredients'}</h2>
+	<h2 class="section-title">{words.ingredients}</h2>
 	{#if body.ingredients.length}
 		<ul class="card divide-y divide-gray-100">
 			{#each body.ingredients as line, i (i)}<li class="px-4 py-2">{line}</li>{/each}
@@ -62,7 +68,7 @@
 </section>
 
 <section class="mb-6">
-	<h2 class="section-title">{grow ? 'Tek steps' : 'Steps'}</h2>
+	<h2 class="section-title">{words.steps}</h2>
 	{#if body.steps.length}
 		<ol class="card list-inside list-decimal divide-y divide-gray-100">
 			{#each body.steps as line, i (i)}<li class="px-4 py-2">{line}</li>{/each}

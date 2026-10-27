@@ -1,5 +1,5 @@
 import { PRESERVE_METHODS, fixedPhases, isStartableType, type BatchType } from '../enums';
-import { trackedKindsFor } from '../reading-kinds';
+import { targetKindsFor } from '../reading-kinds';
 import type {
 	JarTime,
 	Processing,
@@ -32,7 +32,7 @@ export function readProtocolForm(
 		...phases.map((phase, i) => ({ suffix: `_p${i}`, phase }))
 	];
 	for (const slot of slots) {
-		for (const k of trackedKindsFor(batchType)) {
+		for (const k of targetKindsFor(batchType)) {
 			const min = num(fd, `min_${k.kind}${slot.suffix}`);
 			const max = num(fd, `max_${k.kind}${slot.suffix}`);
 			if (min === null && max === null) continue;

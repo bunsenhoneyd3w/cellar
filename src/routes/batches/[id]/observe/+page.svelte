@@ -7,7 +7,8 @@
 		CONTAMINATION_ACTIONS,
 		CONTAMINATION_KINDS,
 		CONTAMINATION_LABELS,
-		CONTAMINATION_SEVERITIES
+		CONTAMINATION_SEVERITIES,
+		label
 	} from '#lib/enums.ts';
 	import PhaseButtons from '#lib/components/PhaseButtons.svelte';
 	import type { PageProps } from './$types';
@@ -27,12 +28,20 @@
 	// Targets follow the phase picked on this screen, so tapping Fruiting shows fruiting ranges (D25).
 	const target = (kind: string) => targetFor(data.targets, kind, phase);
 
-	// Harvest part (D23): open on its own in fruiting and harvest, one tap away otherwise.
+	// Harvest part (D23, D36): open on its own in fruiting and harvest, one tap away otherwise.
+	// A number is a flush on a grow and a harvest on a tower.
+	const word = $derived(data.harvestWord);
 	let harvestShown = $state(false);
 	const harvestOpen = $derived(harvestShown || phase === 'fruiting' || phase === 'harvest');
 	// svelte-ignore state_referenced_locally
 	let flush = $state(data.nextFlush ?? 1);
 	const maxFlush = $derived(data.nextFlush ?? 1);
+
+	const NOTE_HINTS: Record<string, string> = {
+		preserve: 'Into the canner, jars sealed or not, anything off',
+		hydroponic: 'Roots, leaf color, tip burn, pests, anything off',
+		seedling: 'Sprouts, leaf color, legginess, damping off, anything off'
+	};
 
 	// Contamination events (D22), one card each.
 	let contamKeys = $state<number[]>([]);
@@ -183,12 +192,11 @@
 					</label>
 					<div class="flex min-h-14 items-center gap-3 px-4 py-2">
 						<span class="flex-1">
-							<span class="block">Flush</span>
+							<span class="block">{label(word)}</span>
 							<span class="block text-xs text-gray-500">
 								{#if data.lastFlush}
-									Last harvest: flush {data.lastFlush.flush}, {formatDueDate(
-										localDate(data.lastFlush.harvestedAt)
-									)}
+									Last harvest: {word}
+									{data.lastFlush.flush}, {formatDueDate(localDate(data.lastFlush.harvestedAt))}
 								{:else}
 									First harvest
 								{/if}
@@ -197,7 +205,7 @@
 						<button
 							type="button"
 							class="btn size-12 px-0 text-xl"
-							aria-label="Earlier flush"
+							aria-label="Earlier {word}"
 							disabled={flush <= 1}
 							onclick={() => (flush = Math.max(1, flush - 1))}>−</button
 						>
@@ -206,7 +214,7 @@
 						<button
 							type="button"
 							class="btn size-12 px-0 text-xl"
-							aria-label="Later flush"
+							aria-label="Later {word}"
 							disabled={flush >= maxFlush}
 							onclick={() => (flush = Math.min(maxFlush, flush + 1))}>+</button
 						>
@@ -215,7 +223,7 @@
 				</div>
 				<p class="mt-1 text-sm text-gray-500">
 					{flush === maxFlush && data.lastFlush
-						? 'A new flush. Tap − if this finishes the last one.'
+						? `A new ${word}. Tap − if this finishes the last one.`
 						: 'Weigh the whole harvest, in grams.'}
 				</p>
 			{:else}
@@ -306,9 +314,8 @@
 			rows="3"
 			placeholder={data.contamination
 				? 'Colonization, pins, smell, color, anything off'
-				: data.batch.batchType === 'preserve'
-					? 'Into the canner, jars sealed or not, anything off'
-					: 'Smell, color, bubbles, film, anything off'}></textarea>
+				: (NOTE_HINTS[data.batch.batchType] ?? 'Smell, color, bubbles, film, anything off')}
+		></textarea>
 	</section>
 
 	{#if !data.fixedPhases}
