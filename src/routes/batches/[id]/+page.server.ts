@@ -3,6 +3,7 @@ import { getDb } from '#lib/server/db/index.ts';
 import { getBatchDetail } from '#lib/server/batches.ts';
 import { deleteObservation, getObservation } from '#lib/server/observations.ts';
 import { deletePhotoFiles } from '#lib/server/photos.ts';
+import { reopenBatch } from '#lib/server/outcomes.ts';
 import { str } from '#lib/server/form.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -20,5 +21,10 @@ export const actions: Actions = {
 		if (!obs || obs.batchId !== params.id) return fail(404, { error: 'Observation not found.' });
 		deletePhotoFiles(deleteObservation(db, id));
 		return { deleted: true };
+	},
+
+	reopen: ({ params }) => {
+		reopenBatch(getDb(), params.id);
+		return { reopened: true };
 	}
 };

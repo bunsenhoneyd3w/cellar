@@ -111,6 +111,34 @@
 	</details>
 {/if}
 
+{#if finished}
+	<section class="mb-6">
+		<h2 class="section-title">Outcome</h2>
+		<div class="card px-4 py-3">
+			<p class="mb-2 flex justify-between">
+				<span class="font-medium">{b.status === 'done' ? 'Done' : 'Failed'}</span>
+				{#if data.outcome?.rating}
+					<span aria-label="Rated {data.outcome.rating} of 5">
+						{'★'.repeat(data.outcome.rating)}<span class="text-gray-300"
+							>{'★'.repeat(5 - data.outcome.rating)}</span
+						>
+					</span>
+				{/if}
+			</p>
+			{#if data.outcome?.yieldValue != null}
+				<p class="mb-2 text-gray-700">Yield: {data.outcome.yieldValue} {data.outcome.yieldUnit}</p>
+			{/if}
+			{#if data.outcome?.summary}
+				<p class="mb-2 whitespace-pre-line">{data.outcome.summary}</p>
+			{/if}
+			{#if data.outcome?.wouldChange}
+				<p class="text-sm text-gray-500">Next time</p>
+				<p class="whitespace-pre-line">{data.outcome.wouldChange}</p>
+			{/if}
+		</div>
+	</section>
+{/if}
+
 {#if charts.length}
 	<section class="mb-6">
 		<h2 class="section-title">Readings</h2>
@@ -184,4 +212,14 @@
 	{/if}
 </section>
 
-<a class="btn w-full" href={resolve('/batches/[id]/edit', { id: b.id })}>Edit batch details</a>
+<div class="grid grid-cols-2 gap-3">
+	<a class="btn" href={resolve('/batches/[id]/edit', { id: b.id })}>Edit details</a>
+	<a class="btn" href={resolve('/batches/[id]/finish', { id: b.id })}
+		>{finished ? 'Edit outcome' : 'Finish batch'}</a
+	>
+</div>
+{#if finished}
+	<form method="POST" action="?/reopen" use:enhance class="mt-3">
+		<button class="w-full py-2 text-sm text-gray-500 underline">Reopen this batch</button>
+	</form>
+{/if}
