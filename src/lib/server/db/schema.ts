@@ -188,6 +188,11 @@ export const inventoryItem = sqliteTable('inventory_item', {
 	...stamps()
 });
 
+/**
+ * `due_at` is a local date such as 2026-10-27 (D18); `done_at` is a full
+ * timestamp. Finishing a repeating task inserts the next one (D17), which
+ * points back through `previous_task_id`.
+ */
 export const task = sqliteTable(
 	'task',
 	{
@@ -197,9 +202,14 @@ export const task = sqliteTable(
 		dueAt: text('due_at'),
 		doneAt: text('done_at'),
 		recurrence: text('recurrence'),
+		/** Last date a repeat may land on; null repeats until the batch ends. */
+		repeatUntil: text('repeat_until'),
+		previousTaskId: text('previous_task_id').references((): AnySQLiteColumn => task.id, {
+			onDelete: 'set null'
+		}),
 		...stamps()
 	},
-	(t) => [index('task_due').on(t.dueAt)]
+	(t) => [index('task_due').on(t.dueAt), index('task_batch').on(t.batchId)]
 );
 
 /** Every table, in an order where parents come before children. Used by export. */

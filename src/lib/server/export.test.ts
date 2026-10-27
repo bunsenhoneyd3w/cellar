@@ -52,7 +52,7 @@ describe('export', () => {
 
 		expect(tableCounts(db).find((t) => t.name === 'space')?.count).toBe(1);
 		expect(toCsv([], tableColumns(db, 'task')).split('\r\n')[0]).toBe(
-			'id,batch_id,title,due_at,done_at,recurrence,created_at,updated_at'
+			'id,batch_id,title,due_at,done_at,recurrence,created_at,updated_at,repeat_until,previous_task_id'
 		);
 	});
 });

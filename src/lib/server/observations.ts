@@ -6,6 +6,7 @@ import { nowIso } from '../time';
 import { InputError } from './form';
 import { getBatch } from './batches';
 import type { SavedPhoto } from './photos';
+import { completeTask, getTask } from './tasks';
 
 export type ReadingInput = { kind: string; value: number; unit: string };
 
@@ -74,6 +75,34 @@ export function createObservation(db: Db, input: ObservationInput) {
 		}
 		if (phase !== b.phase) tx.update(batch).set({ phase }).where(eq(batch.id, b.id)).run();
 		return obs;
+	});
+}
+
+/**
+ * What the new observation screen saves: an observation plus any tasks ticked
+ * on it, done at the observation time. Ticking tasks with no note, reading,
+ * or photo marks them done without writing an empty observation.
+ */
+export function saveCheckIn(db: Db, input: ObservationInput & { taskIds?: string[] }) {
+	const taskIds = [...new Set(input.taskIds ?? [])];
+	const hasContent = !!input.note || !!input.readings?.length || !!input.photos?.length;
+	if (!taskIds.length) return { observation: createObservation(db, input), tasksDone: 0 };
+
+	return db.transaction((tx) => {
+		const b = getBatch(tx, input.batchId);
+		if (!b) throw new InputError('That batch no longer exists.');
+		if (!hasContent && input.phase && input.phase !== b.phase) {
+			throw new InputError('Add a note to go with the phase change.');
+		}
+		const observedAt = input.observedAt ?? nowIso();
+		for (const id of taskIds) {
+			if (getTask(tx, id)?.batchId !== b.id) {
+				throw new InputError('One of the ticked tasks is not on this batch.');
+			}
+			completeTask(tx, id, observedAt);
+		}
+		const observation = hasContent ? createObservation(tx, { ...input, observedAt }) : null;
+		return { observation, tasksDone: taskIds.length };
 	});
 }
 

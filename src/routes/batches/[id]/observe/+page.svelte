@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance, type SubmitFunction } from '$app/forms';
-	import { dayNumber, toLocalInput } from '#lib/time.ts';
+	import { dayNumber, formatDueDate, toLocalInput } from '#lib/time.ts';
+	import { formatRecurrence } from '#lib/recurrence.ts';
 	import { formatRange } from '#lib/protocol-body.ts';
 	import type { PageProps } from './$types';
 
@@ -52,6 +53,26 @@
 {#if form?.error}<p class="error">{form.error}</p>{/if}
 
 <form method="POST" enctype="multipart/form-data" use:enhance={submit} class="space-y-6">
+	{#if data.dueTasks.length}
+		<section>
+			<h2 class="section-title">Tasks due</h2>
+			<div class="card divide-y divide-gray-100">
+				{#each data.dueTasks as t (t.id)}
+					<label class="flex min-h-14 cursor-pointer items-center gap-4 px-4 py-2">
+						<input type="checkbox" name="taskId" value={t.id} class="size-7 rounded" />
+						<span class="flex-1">
+							<span class="block">{t.title}</span>
+							<span class="block text-xs text-gray-500">
+								{formatDueDate(t.dueAt)}{t.recurrence ? ` · ${formatRecurrence(t.recurrence)}` : ''}
+							</span>
+						</span>
+					</label>
+				{/each}
+			</div>
+			<p class="mt-1 text-sm text-gray-500">Tick what you did. Ticking alone is enough to save.</p>
+		</section>
+	{/if}
+
 	<section>
 		<h2 class="section-title">Photos</h2>
 		<div class="grid grid-cols-2 gap-3">

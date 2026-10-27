@@ -16,6 +16,7 @@ import type { ProtocolSnapshot } from '../protocol-body';
 import { nowIso } from '../time';
 import { InputError } from './form';
 import { getProtocol } from './protocols';
+import { createTasksFromTemplates } from './tasks';
 
 export { batchName } from '../batch-name';
 
@@ -46,7 +47,8 @@ export function nextBatchNumber(db: Db, type: BatchType): number {
 /**
  * Starts a batch from a protocol. The protocol is copied into the batch as it
  * is right now (CLAUDE.md rule 4); later edits to the protocol make new
- * versions and never reach this copy.
+ * versions and never reach this copy. Tasks the protocol lists are created
+ * from that copy (D19).
  */
 export function createBatch(db: Db, input: NewBatchInput): Batch {
 	if (!input.name.trim()) throw new InputError('Give the batch a name.');
@@ -82,6 +84,7 @@ export function createBatch(db: Db, input: NewBatchInput): Batch {
 			.returning()
 			.get();
 		setEquipment(tx, row.id, input.equipmentIds ?? []);
+		createTasksFromTemplates(tx, row);
 		return row;
 	});
 }

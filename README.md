@@ -49,6 +49,13 @@ The app creates the database and applies any pending migrations when it starts. 
 5. Add observation from the batch page, on the phone: photos, readings, note, phase.
 6. Finish batch: done or failed, yield, rating, what to change.
 
+## Using it (Phase 2: Today and tasks)
+
+1. Today shows what is overdue, what is due today, the coming week, and undated tasks, above the active batches. Tap Done on a task; Undo shows for a few seconds if you hit the wrong one.
+2. Add task from Today (general) or from a batch page. A repeating task (every day, every week, every few days) makes its next copy when you tap Done, counted from the day you did it, and can stop after a date.
+3. Edit a protocol to give it "Tasks for each batch", such as "Top up airlock water, day 1, every week, last day 28". Every batch started from it gets those tasks.
+4. On Add observation, tick the tasks you did. Ticking alone is enough to save.
+
 ## Other commands
 
 | Command | What it does |
