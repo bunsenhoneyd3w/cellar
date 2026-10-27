@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { dayNumber, formatDate } from '#lib/time.ts';
+	import { enhance } from '$app/forms';
+	import ReadingChart from '#lib/components/ReadingChart.svelte';
+	import { dayNumber, formatDate, formatDateTime } from '#lib/time.ts';
 	import { formatRange } from '#lib/protocol-body.ts';
-	import { readingKind } from '#lib/reading-kinds.ts';
+	import { READING_KINDS, readingKind } from '#lib/reading-kinds.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -10,6 +12,25 @@
 	const snap = $derived(b.protocolSnapshotJson);
 	const finished = $derived(b.status === 'done' || b.status === 'failed');
 	const day = $derived(b.startedAt ? dayNumber(b.startedAt, b.endedAt) : null);
+
+	// One chart per reading kind: kinds with a protocol target first, then list order.
+	const hasTarget = (kind: string) => !!snap?.body.targets.some((t) => t.kind === kind);
+	const charts = $derived(
+		READING_KINDS.map((k) => k.kind)
+			.filter((kind) => data.readings.some((r) => r.kind === kind))
+			.sort((a, c) => Number(hasTarget(c)) - Number(hasTarget(a)))
+			.map((kind) => {
+				const rows = data.readings.filter((r) => r.kind === kind);
+				return {
+					kind,
+					label: readingKind(kind)?.label ?? kind,
+					unit: rows[0].unit,
+					points: rows,
+					target: snap?.body.targets.find((t) => t.kind === kind)
+				};
+			})
+	);
+	const label = (kind: string) => readingKind(kind)?.label ?? kind;
 </script>
 
 <h1 class="text-2xl font-bold">{b.name}</h1>
@@ -24,6 +45,13 @@
 	{#if b.phase}
 		· {b.phase}{/if}
 </p>
+
+{#if !finished}
+	<a
+		class="btn-primary mb-6 min-h-14 w-full text-lg"
+		href={resolve('/batches/[id]/observe', { id: b.id })}>Add observation</a
+	>
+{/if}
 
 <dl class="card mb-6 divide-y divide-gray-100 text-sm">
 	<div class="flex justify-between gap-4 px-4 py-2">
@@ -83,10 +111,76 @@
 	</details>
 {/if}
 
+{#if charts.length}
+	<section class="mb-6">
+		<h2 class="section-title">Readings</h2>
+		<div class="space-y-3">
+			{#each charts as c (c.kind)}
+				<ReadingChart label={c.label} unit={c.unit} points={c.points} target={c.target} />
+			{/each}
+		</div>
+	</section>
+{/if}
+
 <section class="mb-6">
 	<h2 class="section-title">Timeline</h2>
 	{#if data.observations.length === 0}
 		<p class="empty">No observations yet.</p>
+	{:else}
+		<ol class="space-y-3">
+			{#each data.observations as o (o.id)}
+				<li class="card px-4 py-3">
+					<p class="mb-1 flex justify-between text-sm text-gray-500">
+						<span>
+							{b.startedAt ? `Day ${dayNumber(b.startedAt, o.observedAt)} · ` : ''}{formatDateTime(
+								o.observedAt
+							)}
+						</span>
+						{#if o.phase}<span>{o.phase}</span>{/if}
+					</p>
+					{#if o.note}<p class="mb-2 whitespace-pre-line">{o.note}</p>{/if}
+					{#if o.readings.length}
+						<ul class="mb-2 flex flex-wrap gap-2">
+							{#each o.readings as r (r.id)}
+								<li class="rounded-full bg-gray-100 px-3 py-1 text-sm">
+									{label(r.kind)} <strong>{r.value}</strong>
+									{r.unit === label(r.kind) ? '' : r.unit}
+								</li>
+							{/each}
+						</ul>
+					{/if}
+					{#if o.photos.length}
+						<ul class="mb-2 grid grid-cols-3 gap-2">
+							{#each o.photos as p (p.id)}
+								<li>
+									<!-- eslint-disable svelte/no-navigation-without-resolve -->
+									<a href="{resolve('/')}photos/{p.path}" target="_blank" rel="noopener">
+										<img
+											src="{resolve('/')}photos/{p.path}"
+											alt="Photo from {formatDateTime(o.observedAt)}"
+											loading="lazy"
+											class="aspect-square w-full rounded-lg object-cover"
+										/>
+									</a>
+									<!-- eslint-enable svelte/no-navigation-without-resolve -->
+								</li>
+							{/each}
+						</ul>
+					{/if}
+					<form
+						method="POST"
+						action="?/deleteObservation"
+						use:enhance
+						onsubmit={(e) => {
+							if (!confirm('Delete this observation and its photos?')) e.preventDefault();
+						}}
+					>
+						<input type="hidden" name="observationId" value={o.id} />
+						<button class="text-sm text-gray-500 underline">Delete</button>
+					</form>
+				</li>
+			{/each}
+		</ol>
 	{/if}
 </section>
 
