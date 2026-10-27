@@ -2,6 +2,8 @@
 	import { resolve } from '$app/paths';
 	import TaskRow from '#lib/components/TaskRow.svelte';
 	import UndoBar from '#lib/components/UndoBar.svelte';
+	import BatchPhoto from '#lib/components/BatchPhoto.svelte';
+	import TypeChip from '#lib/components/TypeChip.svelte';
 	import { dayNumber, formatDate } from '#lib/time.ts';
 	import type { PageProps } from './$types';
 
@@ -112,22 +114,32 @@
 			<a class="underline" href={resolve('/batches/new')}>Start a batch</a>
 		</p>
 	{:else}
-		<ul class="space-y-2">
+		<!-- Photo first (D49): what you are tending, at a glance. -->
+		<ul class="grid grid-cols-2 gap-3">
 			{#each data.batches as b (b.id)}
 				{@const due = dueFor(b.id)}
 				<li>
-					<a href={resolve('/batches/[id]', { id: b.id })} class="card block px-4 py-3">
-						<span class="flex items-baseline justify-between gap-3">
-							<span class="font-medium">{b.name}</span>
-							<span class="shrink-0 text-sm text-ink-muted">
+					<a
+						href={resolve('/batches/[id]', { id: b.id })}
+						class="card flex h-full flex-col overflow-hidden active:bg-sunken"
+					>
+						<BatchPhoto type={b.batchType} path={b.latestPhotoPath} class="h-28 w-full" />
+						<span class="flex flex-1 flex-col gap-1 px-3 py-2">
+							<span><TypeChip type={b.batchType} /></span>
+							<span class="leading-snug font-medium">{b.name}</span>
+							<span class="text-sm text-ink-muted">
 								{b.status === 'planned'
 									? `Starts ${formatDate(b.startedAt)}`
-									: `Day ${b.startedAt ? dayNumber(b.startedAt) : 0}`}
+									: `Day ${b.startedAt ? dayNumber(b.startedAt) : 0}`}{b.phase
+									? ` · ${b.phase}`
+									: ''}
 							</span>
-						</span>
-						<span class="block text-sm text-ink-muted">
-							{b.phase ? `${b.phase} · ` : ''}{lastSeen(b.lastObservedAt)}{#if due}
-								· <span class="font-medium text-ink">{plural(due, 'task')} due</span>{/if}
+							<span class="text-xs text-ink-muted">{lastSeen(b.lastObservedAt)}</span>
+							{#if due}
+								<span class="mt-auto pt-1 text-sm font-medium text-accent"
+									>{plural(due, 'task')} due</span
+								>
+							{/if}
 						</span>
 					</a>
 				</li>

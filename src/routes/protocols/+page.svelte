@@ -1,6 +1,6 @@
 <script lang="ts">
+	import TypeChip from '#lib/components/TypeChip.svelte';
 	import { resolve } from '$app/paths';
-	import { label } from '#lib/enums.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -22,9 +22,10 @@
 		{#each data.protocols as p (p.id)}
 			<li>
 				<a href={resolve('/protocols/[id]', { id: p.id })} class="block px-4 py-3">
-					<span class="block font-medium">{p.name}</span>
+					<TypeChip type={p.batchType} />
+					<span class="mt-0.5 block font-medium">{p.name}</span>
 					<span class="block text-sm text-ink-muted">
-						{label(p.batchType)} · version {p.version}{p.source ? ` · ${p.source}` : ''}
+						Version {p.version}{p.source ? ` · ${p.source}` : ''}
 					</span>
 				</a>
 			</li>

@@ -1,8 +1,8 @@
 <script lang="ts">
+	import TypeChip from '#lib/components/TypeChip.svelte';
 	import { resolve } from '$app/paths';
 	import { dayNumber, formatDate } from '#lib/time.ts';
 	import { MAX_COMPARE } from '#lib/compare.ts';
-	import { label } from '#lib/enums.ts';
 	import { kindLabel } from '#lib/reading-kinds.ts';
 	import ProcessingCard from '#lib/components/ProcessingCard.svelte';
 	import {
@@ -27,11 +27,10 @@
 	);
 </script>
 
-<h1 class="text-2xl font-bold">{p.name}</h1>
+<TypeChip type={p.batchType} />
+<h1 class="mt-1 text-2xl font-bold">{p.name}</h1>
 <p class="mb-4 text-sm text-ink-muted">
-	{label(p.batchType)} · version {p.version} · saved {formatDate(p.createdAt)}{p.source
-		? ` · ${p.source}`
-		: ''}
+	Version {p.version} · saved {formatDate(p.createdAt)}{p.source ? ` · ${p.source}` : ''}
 </p>
 
 {#if !data.isLatest}

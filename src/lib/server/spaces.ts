@@ -72,3 +72,15 @@ function check(db: Db, id: string | null, input: SpaceInput) {
 		cursor = parent.parentSpaceId;
 	}
 }
+
+/** A space and every space inside it, at any depth: what "in the basement" means for a filter. */
+export function spaceAndInside(
+	spaces: Pick<Space, 'id' | 'parentSpaceId'>[],
+	id: string
+): string[] {
+	const out = [id];
+	for (let i = 0; i < out.length; i++) {
+		for (const s of spaces) if (s.parentSpaceId === out[i] && !out.includes(s.id)) out.push(s.id);
+	}
+	return out;
+}

@@ -5,6 +5,7 @@
 	import TaskRow from '#lib/components/TaskRow.svelte';
 	import UndoBar from '#lib/components/UndoBar.svelte';
 	import ProcessingCard from '#lib/components/ProcessingCard.svelte';
+	import TypeChip from '#lib/components/TypeChip.svelte';
 	import { dayNumber, formatDate, formatDateTime } from '#lib/time.ts';
 	import { CONTAMINATION_LABELS, harvestWord, label as titleCase } from '#lib/enums.ts';
 	import {
@@ -61,12 +62,25 @@
 			.reverse()
 	);
 	const tossed = $derived(!finished && events.at(-1)?.action === 'tossed');
+	// Newest check-in photo as the banner (D49); observations come newest first.
+	const banner = $derived(data.observations.find((o) => o.photos.length)?.photos[0]);
 	const grams = (n: number) => `${Math.round(n * 10) / 10} g`;
 	const contamText = (c: { kind: string; severity: string; action: string }) =>
 		[c.kind, c.severity, c.action].map((v) => CONTAMINATION_LABELS[v] ?? v).join(' · ');
 </script>
 
-<h1 class="text-2xl font-bold">{b.name}</h1>
+{#if banner}
+	<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+	<a href="{resolve('/')}photos/{banner.path}" target="_blank" rel="noopener" class="mb-3 block">
+		<img
+			src="{resolve('/')}photos/{banner.path}"
+			alt="Latest photo of {b.name}"
+			class="h-44 w-full rounded-xl object-cover"
+		/>
+	</a>
+{/if}
+<TypeChip type={b.batchType} />
+<h1 class="mt-1 text-2xl font-bold">{b.name}</h1>
 <p class="mb-4 text-ink-muted">
 	{#if b.status === 'planned'}
 		Starts {formatDate(b.startedAt)}

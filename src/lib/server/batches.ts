@@ -137,9 +137,15 @@ export function getBatch(db: Db, id: string): Batch | undefined {
 }
 
 /** `familyId` keeps batches started from any version of one protocol. */
-export type BatchFilter = { status?: BatchStatus[]; type?: BatchType; familyId?: string };
+export type BatchFilter = {
+	status?: BatchStatus[];
+	type?: BatchType;
+	familyId?: string;
+	/** Batches in any of these spaces (a space and the ones inside it). */
+	spaceIds?: string[];
+};
 
-/** Batches with their space and the time of the latest observation, newest first. */
+/** Batches with their space, latest observation time, and latest photo, newest first. */
 export function listBatches(db: Db, filter: BatchFilter = {}) {
 	const lastObserved = db
 		.select({
@@ -151,12 +157,21 @@ export function listBatches(db: Db, filter: BatchFilter = {}) {
 		.groupBy(observation.batchId)
 		.as('last_obs');
 
+	// The photo from the most recent check-in stands for the batch on Today and in lists (D49).
+	const latestPhoto = sql<string | null>`(
+		select ${photo.path} from ${photo}
+		join ${observation} on ${observation.id} = ${photo.observationId}
+		where ${observation.batchId} = ${batch.id}
+		order by ${observation.observedAt} desc, ${photo}.rowid desc limit 1
+	)`;
+
 	return db
 		.select({
 			batch,
 			spaceName: space.name,
 			lastObservedAt: lastObserved.last,
-			observationCount: lastObserved.count
+			observationCount: lastObserved.count,
+			latestPhotoPath: latestPhoto
 		})
 		.from(batch)
 		.leftJoin(space, eq(batch.spaceId, space.id))
@@ -165,6 +180,7 @@ export function listBatches(db: Db, filter: BatchFilter = {}) {
 			and(
 				filter.status?.length ? inArray(batch.status, filter.status) : undefined,
 				filter.type ? eq(batch.batchType, filter.type) : undefined,
+				filter.spaceIds ? inArray(batch.spaceId, filter.spaceIds) : undefined,
 				filter.familyId
 					? sql`json_extract(${batch.protocolSnapshotJson}, '$.familyId') = ${filter.familyId}`
 					: undefined
@@ -176,7 +192,8 @@ export function listBatches(db: Db, filter: BatchFilter = {}) {
 			...r.batch,
 			spaceName: r.spaceName,
 			lastObservedAt: r.lastObservedAt,
-			observationCount: r.observationCount ?? 0
+			observationCount: r.observationCount ?? 0,
+			latestPhotoPath: r.latestPhotoPath
 		}));
 }
 

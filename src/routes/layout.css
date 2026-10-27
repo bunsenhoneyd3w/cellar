@@ -39,6 +39,18 @@
 	--color-series-2: #eb6834;
 	--color-series-3: #1baf7a;
 	--color-series-4: #eda100;
+
+	/* One color per batch type (D49): a soft chip background and its ink. */
+	--color-ferment-bg: #f3e3c2;
+	--color-ferment-ink: #6e4708;
+	--color-mushroom-bg: #e9ddd0;
+	--color-mushroom-ink: #5b4231;
+	--color-hydroponic-bg: #dce8cf;
+	--color-hydroponic-ink: #33501f;
+	--color-seedling-bg: #e6eecb;
+	--color-seedling-ink: #4a5a12;
+	--color-preserve-bg: #f5d9d2;
+	--color-preserve-ink: #8a2a1a;
 }
 
 /* Dark values apply when the phone is set to dark, unless Settings forces
@@ -78,6 +90,16 @@
 		--color-series-2: #d95926;
 		--color-series-3: #199e70;
 		--color-series-4: #c98500;
+		--color-ferment-bg: #4a3713;
+		--color-ferment-ink: #f3d69b;
+		--color-mushroom-bg: #3e3027;
+		--color-mushroom-ink: #e2cdb8;
+		--color-hydroponic-bg: #2a3a20;
+		--color-hydroponic-ink: #c6ddaa;
+		--color-seedling-bg: #343b17;
+		--color-seedling-ink: #d9e3a6;
+		--color-preserve-bg: #4a221b;
+		--color-preserve-ink: #f2b8aa;
 	}
 }
 :root[data-theme='dark'] {
@@ -112,6 +134,16 @@
 	--color-series-2: #d95926;
 	--color-series-3: #199e70;
 	--color-series-4: #c98500;
+	--color-ferment-bg: #4a3713;
+	--color-ferment-ink: #f3d69b;
+	--color-mushroom-bg: #3e3027;
+	--color-mushroom-ink: #e2cdb8;
+	--color-hydroponic-bg: #2a3a20;
+	--color-hydroponic-ink: #c6ddaa;
+	--color-seedling-bg: #343b17;
+	--color-seedling-ink: #d9e3a6;
+	--color-preserve-bg: #4a221b;
+	--color-preserve-ink: #f2b8aa;
 }
 :root[data-theme='light'] {
 	color-scheme: light;
