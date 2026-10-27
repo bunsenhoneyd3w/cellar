@@ -1,0 +1,17 @@
+{
+	"name": "Cellar",
+	"short_name": "Cellar",
+	"description": "Lab notebook for the basement grow and preservation room",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#f9fafb",
+	"theme_color": "#1f2937",
+	"icons": [
+		{
+			"src": "/icon.svg",
+			"sizes": "any",
+			"type": "image/svg+xml",
+			"purpose": "any maskable"
+		}
+	]
+}

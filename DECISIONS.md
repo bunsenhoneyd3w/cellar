@@ -15,12 +15,12 @@ Running log. Add a row when a choice is made that affects the schema, stack, hos
 | D9 | 2026-10-26 | Name: Cellar. Repo and folder: `cellar` | Root Cellar; Labbook; Basement Lab | Short, covers grow, ferment, and preserves |
 | A1 | 2026-10-26 | Single user, no login; home network only | Shared household login; multiple accounts | Nothing to build; revisit only if the Pi is exposed outside the home network |
 | A2 | 2026-10-26 | Develop on a Mac laptop; target ARM64 Linux (Raspberry Pi) for the home server | Windows; Linux mini PC | Mac is in hand; Pi scoped in `cellar-brief.md` section 6 |
+| D10 | 2026-10-26 | Framework: SvelteKit with `adapter-node` (resolves O1) | Next.js | Ships far less JavaScript to the phone, form actions give server routes with no client code for the one-handed capture screens, and `adapter-node` runs as a plain Node process on the Pi; Next.js adds React Server Component complexity this app does not need |
 
 ## Open items (not yet decided)
 
 | # | Item | Needed by | Notes |
 |---|---|---|---|
-| O1 | Framework: Next.js or SvelteKit | Phase 0 | Claude Code picks and records here with one line of reasoning |
 | O2 | Reading kinds and units for ferments | Phase 1 | Starting list in `cellar-brief.md` section 3.7; Seth confirms |
 | O3 | Pi model and storage | Phase 6 | Pi 5 with an SSD is the default assumption; confirm when buying |
 | O4 | Whether the MYCOntroller or hydroponic tower expose any data | Phase 6 | Assumed no; verify before buying a separate sensor |
