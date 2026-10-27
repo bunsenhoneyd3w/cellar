@@ -3,7 +3,8 @@ import type { Db } from './db';
 import { protocol } from './db/schema';
 import { newId } from './db/ids';
 import type { BatchType } from '../enums';
-import type { ProtocolBody } from '../protocol-body';
+import { bodyTasks, type ProtocolBody } from '../protocol-body';
+import { recurrenceDays } from '../recurrence';
 import { InputError } from './form';
 import { recipeNotes, recipeToBody, type PaprikaRecipe } from './paprika';
 
@@ -87,6 +88,19 @@ function check(input: ProtocolInput) {
 	for (const t of input.bodyJson.targets) {
 		if (t.min !== null && t.max !== null && t.min > t.max) {
 			throw new InputError(`The ${t.kind} target has a minimum above its maximum.`);
+		}
+	}
+	for (const t of bodyTasks(input.bodyJson)) {
+		const name = t.title.trim();
+		if (!name) throw new InputError('Every task in the list needs a name.');
+		if (!Number.isInteger(t.startDay) || t.startDay < 0) {
+			throw new InputError(`${name}: the first day is a whole number, 0 or more.`);
+		}
+		if (t.recurrence && recurrenceDays(t.recurrence) === null) {
+			throw new InputError(`${name}: repeat every 1 to 365 days.`);
+		}
+		if (t.endDay !== null && (!Number.isInteger(t.endDay) || t.endDay < t.startDay)) {
+			throw new InputError(`${name}: the last day is a whole number on or after the first day.`);
 		}
 	}
 }

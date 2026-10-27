@@ -58,3 +58,55 @@ export function formatDateTime(iso: string | null | undefined): string {
 		minute: '2-digit'
 	});
 }
+
+// Date-only values (task due dates, D18) are plain local calendar dates such
+// as 2026-10-27. Comparing them as strings sorts them by day.
+
+const DATE = /^\d{4}-\d\d-\d\d$/;
+
+function dateParts(date: string): [number, number, number] {
+	const [y, m, d] = date.split('-').map(Number);
+	return [y, m, d];
+}
+
+/** True for a real calendar date written as YYYY-MM-DD. */
+export function isDate(value: string | null | undefined): value is string {
+	if (!value || !DATE.test(value)) return false;
+	const [y, m, d] = dateParts(value);
+	const x = new Date(y, m - 1, d);
+	return x.getFullYear() === y && x.getMonth() === m - 1 && x.getDate() === d;
+}
+
+/** The local calendar date of a moment (default now), e.g. 2026-10-27. */
+export function localDate(at: Date | string = new Date()): string {
+	const d = typeof at === 'string' ? new Date(DATE.test(at) ? `${at}T00:00` : at) : at;
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function addDays(date: string, days: number): string {
+	const [y, m, d] = dateParts(date);
+	return localDate(new Date(y, m - 1, d + days));
+}
+
+/** Whole days from one date to another; negative when `to` is earlier. */
+export function daysBetween(from: string, to: string): number {
+	const [y1, m1, d1] = dateParts(from);
+	const [y2, m2, d2] = dateParts(to);
+	return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
+}
+
+/** "Today", "Tomorrow", "Yesterday", or a short date such as "Tue, Oct 28". */
+export function formatDueDate(date: string | null | undefined, today = localDate()): string {
+	if (!date) return '';
+	const diff = daysBetween(today, date);
+	if (diff === 0) return 'Today';
+	if (diff === 1) return 'Tomorrow';
+	if (diff === -1) return 'Yesterday';
+	const [y, m, d] = dateParts(date);
+	return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+		weekday: 'short',
+		month: 'short',
+		day: 'numeric',
+		...(y === Number(today.slice(0, 4)) ? {} : { year: 'numeric' })
+	});
+}
